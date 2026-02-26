@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>{% block title %}Supply Chain Portal{% endblock %}</title>
+  <title>{% block title %}Parkour Game{% endblock %}</title>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,400,500,600,700" />
   <link href="{% static 'assets/plugins/global/plugins.bundle.css' %}" rel="stylesheet" />
   <link href="{% static 'assets/css/style.bundle.css' %}" rel="stylesheet" />
@@ -20,7 +20,6 @@
   data-kt-app-sidebar-push-footer="true"
   class="app-default">
 
-  <!--begin::Theme mode-->
   <script>
     var defaultThemeMode = "light";
     var themeMode;
@@ -36,7 +35,6 @@
       document.documentElement.setAttribute("data-bs-theme", themeMode);
     }
   </script>
-  <!--end::Theme mode-->
 
   <div class="d-flex flex-column flex-root app-root" id="kt_app_root">
     <div class="app-page flex-column flex-column-fluid" id="kt_app_page">
@@ -50,9 +48,9 @@
             <button class="btn btn-icon btn-color-gray-500 btn-active-color-primary w-35px h-35px ms-n2 me-2 d-lg-none" id="kt_app_sidebar_mobile_toggle">
               <i class="ki-outline ki-abstract-14 fs-2"></i>
             </button>
-            <a href="{% url 'dashboard' %}" class="d-flex align-items-center gap-2">
-              <i class="ki-outline ki-abstract-26 text-primary fs-1"></i>
-              <span class="text-gray-900 fw-bolder fs-4">SC Portal</span>
+            <a href="{% url 'parkour_game' %}" class="d-flex align-items-center gap-2">
+              <i class="ki-outline ki-rocket text-primary fs-1"></i>
+              <span class="text-gray-900 fw-bolder fs-4">Parkour</span>
             </a>
           </div>
           <!--end::Logo-->
@@ -60,74 +58,22 @@
           <!--begin::Header right-->
           <div class="d-flex align-items-stretch justify-content-end flex-lg-grow-1">
             <div class="app-navbar flex-shrink-0 gap-2 gap-lg-5">
-
-              <!--begin::User menu-->
-              <div class="app-navbar-item ms-1 ms-lg-5" id="kt_header_user_menu_toggle">
-                <!--begin::Menu wrapper-->
-                <div class="d-flex align-items-center cursor-pointer" data-kt-menu-trigger="{default: 'click', lg: 'hover'}" data-kt-menu-attach="parent" data-kt-menu-placement="bottom-end">
-                  <!--begin::Info-->
+              <div class="app-navbar-item ms-1 ms-lg-5">
+                <div class="d-flex align-items-center cursor-pointer">
                   <div class="text-end d-none d-sm-flex flex-column justify-content-center me-3">
-                    <span class="text-gray-500 fs-8 fw-bold">Hello,</span>
                     <span class="text-gray-800 fs-7 fw-bold">{{ request.user.get_full_name|default:request.user.username }}</span>
                   </div>
-                  <!--end::Info-->
-                  <!--begin::User avatar-->
                   <div class="cursor-pointer symbol symbol-circle symbol-35px symbol-md-40px">
-                    {% if portal_user and portal_user.avatar %}
-                      <img src="{{ portal_user.avatar.url }}" alt="Avatar" class="symbol-label" />
-                    {% else %}
-                      <span class="symbol-label bg-light-primary text-primary fs-5 fw-bolder">{{ request.user.username|first|upper }}</span>
-                    {% endif %}
+                    <span class="symbol-label bg-light-primary text-primary fs-5 fw-bolder">{{ request.user.username|first|upper }}</span>
                   </div>
-                  <!--end::User avatar-->
                 </div>
-                <!--begin::User account menu-->
-                <div class="menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-gray-800 menu-state-bg menu-state-color fw-semibold py-4 fs-6 w-275px" data-kt-menu="true">
-                  <!--begin::Menu item-->
-                  <div class="menu-item px-3">
-                    <div class="menu-content d-flex align-items-center px-3">
-                      <!--begin::Avatar-->
-                      <div class="symbol symbol-50px me-5">
-                        {% if portal_user and portal_user.avatar %}
-                          <img src="{{ portal_user.avatar.url }}" alt="Avatar" class="symbol-label" />
-                        {% else %}
-                          <span class="symbol-label bg-light-primary text-primary fs-3 fw-bolder">{{ request.user.username|first|upper }}</span>
-                        {% endif %}
-                      </div>
-                      <!--end::Avatar-->
-                      <!--begin::Username-->
-                      <div class="d-flex flex-column">
-                        <div class="fw-bold d-flex align-items-center fs-5">{{ request.user.get_full_name|default:request.user.username }}</div>
-                        <span class="fw-semibold text-muted fs-7">{{ request.user.email }}</span>
-                      </div>
-                      <!--end::Username-->
-                    </div>
-                  </div>
-                  <!--end::Menu item-->
-                  <!--begin::Menu separator-->
-                  <div class="separator my-2"></div>
-                  <!--end::Menu separator-->
-                  <!--begin::Menu item-->
-                  <div class="menu-item px-5">
-                    <a href="{% url 'user_detail' request.user.pk %}" class="menu-link px-5">My Profile</a>
-                  </div>
-                  <!--end::Menu item-->
-                  <!--begin::Menu separator-->
-                  <div class="separator my-2"></div>
-                  <!--end::Menu separator-->
-                  <!--begin::Menu item-->
-                  <div class="menu-item px-5">
-                    <form method="post" action="{% url 'logout' %}" class="m-0">
-                      {% csrf_token %}
-                      <button type="submit" class="menu-link px-5 btn btn-flush text-start w-100">Sign Out</button>
-                    </form>
-                  </div>
-                  <!--end::Menu item-->
-                </div>
-                <!--end::User account menu-->
               </div>
-              <!--end::User menu-->
-
+              <div class="app-navbar-item ms-1">
+                <form method="post" action="{% url 'logout' %}" class="m-0">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-sm btn-light-danger">Sign Out</button>
+                </form>
+              </div>
             </div>
           </div>
           <!--end::Header right-->
@@ -161,101 +107,12 @@
                 data-kt-scroll-wrappers="#kt_app_sidebar_menu"
                 data-kt-scroll-offset="20px">
 
-                {% if request.user.is_superuser %}
-                <!--begin::Superadmin navigation-->
                 <div class="menu-item">
-                  <div class="menu-content">
-                    <span class="menu-section fs-8 fw-bolder text-uppercase ls-1 py-1">Main</span>
-                  </div>
-                </div>
-                <div class="menu-item">
-                  <a class="menu-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}">
-                    <span class="menu-icon"><i class="ki-outline ki-home-2 fs-2"></i></span>
-                    <span class="menu-title">Dashboard</span>
-                  </a>
-                </div>
-                <div class="menu-item mt-2">
-                  <div class="menu-content">
-                    <span class="menu-section fs-8 fw-bolder text-uppercase ls-1 py-1">Entities</span>
-                  </div>
-                </div>
-                <div class="menu-item">
-                  <a class="menu-link {% if 'company' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'company_list' %}">
-                    <span class="menu-icon"><i class="ki-outline ki-bank fs-2"></i></span>
-                    <span class="menu-title">Companies</span>
-                  </a>
-                </div>
-                <div class="menu-item">
-                  <a class="menu-link {% if 'user' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'user_list' %}">
-                    <span class="menu-icon"><i class="ki-outline ki-people fs-2"></i></span>
-                    <span class="menu-title">Users</span>
-                  </a>
-                </div>
-                <div class="menu-item mt-2">
-                  <div class="menu-content">
-                    <span class="menu-section fs-8 fw-bolder text-uppercase ls-1 py-1">Fun</span>
-                  </div>
-                </div>
-                <div class="menu-item">
-                  <a class="menu-link {% if request.resolver_match.url_name == 'parkour_game' %}active{% endif %}" href="{% url 'parkour_game' %}">
+                  <a class="menu-link active" href="{% url 'parkour_game' %}">
                     <span class="menu-icon"><i class="ki-outline ki-rocket fs-2"></i></span>
                     <span class="menu-title">Parkour Game</span>
                   </a>
                 </div>
-                <!--end::Superadmin navigation-->
-                {% else %}
-                <!--begin::Regular user navigation-->
-                <div class="menu-item">
-                  <div class="menu-content">
-                    <span class="menu-section fs-8 fw-bolder text-uppercase ls-1 py-1">Main</span>
-                  </div>
-                </div>
-                <div class="menu-item">
-                  <a class="menu-link {% if request.resolver_match.url_name == 'my_dashboard' %}active{% endif %}" href="{% url 'my_dashboard' %}">
-                    <span class="menu-icon"><i class="ki-outline ki-home-2 fs-2"></i></span>
-                    <span class="menu-title">Dashboard</span>
-                  </a>
-                </div>
-                {% if active_company %}
-                <div class="menu-item mt-2">
-                  <div class="menu-content">
-                    <span class="menu-section fs-8 fw-bolder text-uppercase ls-1 py-1">{{ active_company.name }}</span>
-                  </div>
-                </div>
-                <div class="menu-item">
-                  <a class="menu-link {% if 'my_company' in request.resolver_match.url_name or 'my_address' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'my_company_detail' %}">
-                    <span class="menu-icon"><i class="ki-outline ki-bank fs-2"></i></span>
-                    <span class="menu-title">My Company</span>
-                  </a>
-                </div>
-                <div class="menu-item">
-                  <a class="menu-link {% if 'my_user' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'my_user_list' %}">
-                    <span class="menu-icon"><i class="ki-outline ki-people fs-2"></i></span>
-                    <span class="menu-title">Users</span>
-                  </a>
-                </div>
-                {% if user_companies|length > 1 %}
-                <div class="menu-item mt-1">
-                  <a class="menu-link {% if request.resolver_match.url_name == 'my_company_select' %}active{% endif %}" href="{% url 'my_company_select' %}">
-                    <span class="menu-icon"><i class="ki-outline ki-arrows-circle fs-2"></i></span>
-                    <span class="menu-title">Switch Company</span>
-                  </a>
-                </div>
-                {% endif %}
-                {% endif %}
-                <div class="menu-item mt-2">
-                  <div class="menu-content">
-                    <span class="menu-section fs-8 fw-bolder text-uppercase ls-1 py-1">Fun</span>
-                  </div>
-                </div>
-                <div class="menu-item">
-                  <a class="menu-link {% if request.resolver_match.url_name == 'parkour_game' %}active{% endif %}" href="{% url 'parkour_game' %}">
-                    <span class="menu-icon"><i class="ki-outline ki-rocket fs-2"></i></span>
-                    <span class="menu-title">Parkour Game</span>
-                  </a>
-                </div>
-                <!--end::Regular user navigation-->
-                {% endif %}
 
               </div>
             </div>
@@ -265,19 +122,6 @@
           <!--begin::Main-->
           <div class="app-main flex-column flex-row-fluid" id="kt_app_main">
             <div class="d-flex flex-column flex-column-fluid">
-
-              <!--begin::Flash messages-->
-              {% if messages %}
-              <div class="px-5 px-lg-10 pt-5">
-                {% for msg in messages %}
-                <div class="alert alert-{{ msg.tags|default:'info' }} alert-dismissible fade show" role="alert">
-                  {{ msg }}
-                  <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-                {% endfor %}
-              </div>
-              {% endif %}
-              <!--end::Flash messages-->
 
               <!--begin::Content-->
               <div id="kt_app_content" class="app-content flex-column-fluid px-5 px-lg-10 pt-5 pt-lg-10 pb-10">

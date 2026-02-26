@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Companies – SC Portal{% endblock %}
+{% block content %}
+
+<!--begin::Page title-->
+<div class="d-flex align-items-center justify-content-between mb-7">
+  <div>
+    <h1 class="page-heading d-flex text-gray-900 fw-bolder fs-3 flex-column justify-content-center m-0">Companies</h1>
+    <span class="text-gray-500 fw-semibold fs-7">Manage supply chain companies</span>
+  </div>
+  <a href="{% url 'company_create' %}" class="btn btn-primary">
+    <i class="ki-outline ki-plus-square fs-3 me-1"></i>Add Company
+  </a>
+</div>
+<!--end::Page title-->
+
+<!--begin::Card-->
+<div class="card card-flush">
+  <div class="card-body pt-0">
+    {% if companies %}
+    <div class="table-responsive">
+      <table class="table table-row-dashed table-row-gray-300 align-middle gs-0 gy-4 mt-0">
+        <thead>
+          <tr class="fw-bold text-muted">
+            <th class="min-w-200px">Name</th>
+            <th class="min-w-150px">Website</th>
+            <th class="min-w-200px">Main Address</th>
+            <th class="min-w-100px text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for company in companies %}
+          <tr>
+            <td>
+              <a href="{% url 'company_detail' company.pk %}" class="text-gray-900 fw-bold text-hover-primary fs-6">
+                {{ company.name }}
+              </a>
+            </td>
+            <td>
+              {% if company.website %}
+                <a href="{{ company.website }}" target="_blank" class="text-muted fw-semibold text-hover-primary fs-7">{{ company.website }}</a>
+              {% else %}
+                <span class="text-muted fs-7">—</span>
+              {% endif %}
+            </td>
+            <td>
+              <span class="text-muted fw-semibold fs-7">
+                {% if company.main_address %}{{ company.main_address }}{% else %}—{% endif %}
+              </span>
+            </td>
+            <td class="text-end">
+              <a href="{% url 'company_edit' company.pk %}" class="btn btn-icon btn-bg-light btn-active-color-primary btn-sm me-1" title="Edit">
+                <i class="ki-outline ki-pencil fs-3"></i>
+              </a>
+              <a href="{% url 'company_delete' company.pk %}" class="btn btn-icon btn-bg-light btn-active-color-danger btn-sm" title="Delete">
+                <i class="ki-outline ki-trash fs-3"></i>
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="text-center py-20">
+      <i class="ki-outline ki-building fs-3x text-gray-300 mb-5 d-block"></i>
+      <p class="text-gray-500 fw-semibold fs-5">No companies yet.</p>
+      <a href="{% url 'company_create' %}" class="btn btn-primary mt-2">Add the first one</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+<!--end::Card-->
+
+{% endblock %}

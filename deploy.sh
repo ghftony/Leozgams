@@ -6,14 +6,21 @@
 #      ssh root@185.230.218.76
 #    (enter root password when prompted)
 #
-# 2. Pull latest code and restart the service:
-#      cd /home/gohifun && git pull origin main && sudo systemctl restart gohifun.service
-#
-# 3. If static assets changed, run this script on the server:
-#      cd /home/gohifun && bash deploy.sh
+# 2. Pull latest code and run deploy steps:
+#      cd /home/gohifun
+#      git pull origin main
+#      source venv/bin/activate
+#      python manage.py migrate
+#      bash deploy.sh
 # ==================
 
 set -e
+
+echo "==> Activating virtual environment..."
+source venv/bin/activate
+
+echo "==> Running migrations..."
+python manage.py migrate
 
 echo "==> Collecting static files..."
 python manage.py collectstatic --noinput

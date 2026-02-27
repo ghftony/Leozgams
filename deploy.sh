@@ -1,6 +1,17 @@
 #!/bin/bash
 # Deployment script for gohifun / lovesupplychain.com
-# Run this on the server after pulling new code, especially when static assets change.
+#
+# == HOW TO DEPLOY ==
+# 1. SSH into the VPS:
+#      ssh root@185.230.218.76
+#    (enter root password when prompted)
+#
+# 2. Pull latest code and restart the service:
+#      cd /home/gohifun && git pull origin main && sudo systemctl restart gohifun.service
+#
+# 3. If static assets changed, run this script on the server:
+#      cd /home/gohifun && bash deploy.sh
+# ==================
 
 set -e
 

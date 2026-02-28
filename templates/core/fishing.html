@@ -87,6 +87,20 @@ body{background:#1a1a2e;color:#eee;font-family:Arial,sans-serif;display:flex;fle
 .arena-fish-row:hover{background:rgba(79,195,247,.12)}
 #arena-search{width:100%;padding:5px 8px;background:#0f3460;color:#eee;border:1px solid #4fc3f7;border-radius:4px;font-size:12px;outline:none;box-sizing:border-box}
 #arena-search:focus{border-color:#81d4fa}
+/* Saves modal */
+.saves-list{display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto;margin:8px 0}
+.save-slot{display:flex;align-items:center;gap:8px;background:#0f3460;border-radius:6px;padding:8px 10px;border:1px solid #1a3a5e}
+.save-slot-info{flex:1;min-width:0}
+.save-slot-date{font-size:11px;color:#4fc3f7;font-weight:bold;margin-bottom:2px}
+.save-slot-meta{font-size:10px;color:#888}
+.save-slot-btns{display:flex;gap:5px;flex-shrink:0}
+.save-slot-btns button{padding:4px 9px;border:none;border-radius:4px;cursor:pointer;font-size:11px;font-weight:bold}
+.slot-load-btn{background:#4fc3f7;color:#1a1a2e}
+.slot-load-btn:hover{background:#81d4fa}
+.slot-del-btn{background:#555;color:#eee}
+.slot-del-btn:hover{background:#e74c3c;color:#fff}
+.saves-empty{font-size:12px;color:#555;text-align:center;padding:18px 0}
+.mbox.wide{width:460px}
 </style>
 </head>
 <body>
@@ -104,8 +118,7 @@ body{background:#1a1a2e;color:#eee;font-family:Arial,sans-serif;display:flex;fle
   <button class="hbtn" id="btn-music" onclick="toggleMusic()">🎵 Music: OFF</button>
   <button class="hbtn" onclick="openSkinsShop()">👗 Skins</button>
   <button class="hbtn" onclick="openArena()">⚔️ Arena</button>
-  <button class="hbtn" onclick="openSave()">💾 Save</button>
-  <button class="hbtn" onclick="openLoad()">📂 Load</button>
+  <button class="hbtn" onclick="openSavesModal()">💾 Save / Load</button>
 </div>
 <div id="main">
   <div id="canvas-wrap">
@@ -175,29 +188,15 @@ body{background:#1a1a2e;color:#eee;font-family:Arial,sans-serif;display:flex;fle
     <button class="btn mcls" onclick="document.getElementById('skins-overlay').classList.remove('show')">Close</button>
   </div>
 </div>
-<!-- Save modal -->
-<div class="overlay" id="save-overlay">
-  <div class="mbox">
-    <h2>💾 Save Game</h2>
-    <p>Copy this code to save your progress:</p>
-    <textarea id="save-code" readonly></textarea>
-    <div class="row">
-      <button class="btn" onclick="copySave()">📋 Copy Code</button>
-      <button class="btn mcls" onclick="document.getElementById('save-overlay').classList.remove('show')">Close</button>
+<!-- Saves modal -->
+<div class="overlay" id="saves-overlay">
+  <div class="mbox wide">
+    <h2>💾 Save / Load</h2>
+    <button class="btn" style="margin-bottom:10px" onclick="saveNewSlot()">💾 Save Current Game</button>
+    <div id="saves-list" class="saves-list"></div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn mcls" onclick="document.getElementById('saves-overlay').classList.remove('show')">Close</button>
     </div>
-  </div>
-</div>
-<!-- Load modal -->
-<div class="overlay" id="load-overlay">
-  <div class="mbox">
-    <h2>📂 Load Game</h2>
-    <p>Paste your save code below:</p>
-    <textarea id="load-code" placeholder="Paste save code here..."></textarea>
-    <div class="row">
-      <button class="btn" onclick="doLoad()">✓ Load Game</button>
-      <button class="btn mcls" onclick="document.getElementById('load-overlay').classList.remove('show')">Cancel</button>
-    </div>
-    <div id="load-err" style="color:#e74c3c;font-size:11px;margin-top:6px;display:none">Invalid save code!</div>
   </div>
 </div>
 <script>
@@ -905,29 +904,51 @@ function autoSave(){
 function autoLoad(){
   try{const c=localStorage.getItem('ft_save');if(c)applyCode(c);}catch{}
 }
-function openSave(){
-  document.getElementById('save-code').value=getSaveCode();
-  document.getElementById('save-overlay').classList.add('show');
+function getSaves(){try{return JSON.parse(localStorage.getItem('ft_saves')||'[]');}catch{return[];}}
+function putSaves(arr){try{localStorage.setItem('ft_saves',JSON.stringify(arr.slice(0,10)));}catch{}}
+function fmtDate(ts){
+  const d=new Date(ts);
+  return d.toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})+' '+
+         d.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'});
 }
-function copySave(){
-  const ta=document.getElementById('save-code');ta.select();
-  try{document.execCommand('copy');}catch{navigator.clipboard?.writeText(ta.value);}
-  const btn=event.target;btn.textContent='✓ Copied!';setTimeout(()=>btn.textContent='📋 Copy Code',1500);
+function saveNewSlot(){
+  const code=getSaveCode();
+  const saves=getSaves();
+  saves.unshift({ts:Date.now(),label:fmtDate(Date.now()),money:money,rodName:RODS[highRodIdx]?.name||'Basic Rod',fishCount:baseFish.length+inventory.length,code:code});
+  putSaves(saves);
+  try{localStorage.setItem('ft_save',code);}catch{}
+  renderSavesList();
 }
-function openLoad(){
-  document.getElementById('load-code').value='';
-  document.getElementById('load-err').style.display='none';
-  document.getElementById('load-overlay').classList.add('show');
-}
-function doLoad(){
-  const code=document.getElementById('load-code').value;
-  if(applyCode(code)){
-    document.getElementById('load-overlay').classList.remove('show');
+function loadFromSlot(idx){
+  const saves=getSaves();
+  if(!saves[idx])return;
+  if(applyCode(saves[idx].code)){
+    document.getElementById('saves-overlay').classList.remove('show');
     autoSave();
-  }else{
-    document.getElementById('load-err').style.display='block';
-  }
+  }else{alert('Failed to load save!');}
 }
+function deleteSlot(idx){
+  const saves=getSaves();saves.splice(idx,1);putSaves(saves);renderSavesList();
+}
+function renderSavesList(){
+  const saves=getSaves();
+  const el=document.getElementById('saves-list');
+  if(!saves.length){
+    el.innerHTML='<div class="saves-empty">No saves yet — click "Save Current Game" to create one.</div>';
+    return;
+  }
+  el.innerHTML=saves.map((s,i)=>`<div class="save-slot">
+    <div class="save-slot-info">
+      <div class="save-slot-date">${s.label}</div>
+      <div class="save-slot-meta">💰 $${(s.money||0).toLocaleString()} &nbsp;·&nbsp; 🎣 ${s.rodName||'?'} &nbsp;·&nbsp; 🐟 ${s.fishCount||0} fish</div>
+    </div>
+    <div class="save-slot-btns">
+      <button class="slot-load-btn" onclick="loadFromSlot(${i})">Load</button>
+      <button class="slot-del-btn" onclick="deleteSlot(${i})">🗑</button>
+    </div>
+  </div>`).join('');
+}
+function openSavesModal(){renderSavesList();document.getElementById('saves-overlay').classList.add('show');}
 // Close overlays on backdrop click
 function closeModal(){
   if(portraitAnimId){cancelAnimationFrame(portraitAnimId);portraitAnimId=null;}

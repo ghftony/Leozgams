@@ -11,3 +11,7 @@ def parkour_game(request):
 
 def fishing_game(request):
     return render(request, "core/fishing.html")
+
+
+def fishing_portal(request):
+    return render(request, "core/fishing_portal.html")

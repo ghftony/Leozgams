@@ -5,4 +5,5 @@ urlpatterns = [
     path("", views.home, name="home"),
     path("parkour/", views.parkour_game, name="parkour_game"),
     path("fishing/", views.fishing_game, name="fishing_game"),
+    path("fishing-portal/", views.fishing_portal, name="fishing_portal"),
 ]

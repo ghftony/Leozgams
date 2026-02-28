@@ -1,11 +1,8 @@
 #!/bin/bash
-# Deployment script for gohifun / lovesupplychain.com
+# Deployment script for gohifun (Parkour Game)
 #
 # == HOW TO DEPLOY ==
-# 1. SSH into the VPS:
-#      ssh root@185.230.218.76
-#    (enter root password when prompted)
-#
+# 1. SSH into the VPS
 # 2. Pull latest code and run deploy steps:
 #      cd /home/gohifun
 #      git pull origin main
@@ -38,7 +35,7 @@ else
   curl -s -X POST "https://api.cloudflare.com/client/v4/zones/$CF_ZONE_ID/purge_cache" \
     -H "Authorization: Bearer $CF_API_TOKEN" \
     -H "Content-Type: application/json" \
-    --data '{"prefixes":["lovesupplychain.com/static/"]}' \
+    --data '{"purge_everything":true}' \
     | python3 -c "import sys,json; r=json.load(sys.stdin); print('    Cloudflare purge:', 'OK' if r['success'] else r['errors'])"
 fi
 

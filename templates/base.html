@@ -9,15 +9,76 @@
   <link href="{% static 'assets/plugins/global/plugins.bundle.css' %}" rel="stylesheet" />
   <link href="{% static 'assets/css/style.bundle.css' %}" rel="stylesheet" />
   {% block extra_css %}{% endblock %}
+  <style>
+    /* ── Game Launcher ─────────────────────────────────────────── */
+    #launcher-btn {
+      background: none;
+      border: none;
+      padding: 6px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s;
+    }
+    #launcher-btn:hover { background: rgba(0,0,0,0.08); }
+    #launcher-btn svg { display: block; }
+
+    #launcher-popup {
+      display: none;
+      position: fixed;
+      top: 60px;
+      left: 12px;
+      z-index: 9999;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.18);
+      padding: 16px 12px 12px;
+      width: 220px;
+    }
+    #launcher-popup.open { display: block; }
+
+    .launcher-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 4px;
+    }
+    .launcher-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 14px 8px;
+      border-radius: 10px;
+      text-decoration: none;
+      color: #3f4254;
+      font-size: 12px;
+      font-weight: 500;
+      transition: background 0.15s;
+    }
+    .launcher-item:hover {
+      background: #f1f3f9;
+      color: #3f4254;
+      text-decoration: none;
+    }
+    .launcher-item .li-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+    }
+    .li-icon-parkour { background: #e8f0fe; color: #1a73e8; }
+    .li-icon-fishing  { background: #e6f4ea; color: #188038; }
+  </style>
 </head>
 <body id="kt_app_body"
   data-kt-app-header-fixed="true"
   data-kt-app-header-fixed-mobile="true"
-  data-kt-app-sidebar-enabled="true"
-  data-kt-app-sidebar-fixed="true"
-  data-kt-app-sidebar-push-header="true"
-  data-kt-app-sidebar-push-toolbar="true"
-  data-kt-app-sidebar-push-footer="true"
   class="app-default">
 
   <script>
@@ -36,6 +97,24 @@
     }
   </script>
 
+  <!-- Game launcher popup -->
+  <div id="launcher-popup">
+    <div class="launcher-grid">
+      <a class="launcher-item" href="{% url 'parkour_game' %}">
+        <div class="li-icon li-icon-parkour">
+          <i class="ki-outline ki-rocket"></i>
+        </div>
+        Parkour
+      </a>
+      <a class="launcher-item" href="{% url 'fishing_portal' %}">
+        <div class="li-icon li-icon-fishing">
+          <i class="ki-outline ki-fish"></i>
+        </div>
+        Fishing
+      </a>
+    </div>
+  </div>
+
   <div class="d-flex flex-column flex-root app-root" id="kt_app_root">
     <div class="app-page flex-column flex-column-fluid" id="kt_app_page">
 
@@ -45,10 +124,22 @@
 
           <!--begin::Logo-->
           <div class="app-header-logo d-flex align-items-center me-5">
-            <button class="btn btn-icon btn-color-gray-500 btn-active-color-primary w-35px h-35px ms-n2 me-2 d-lg-none" id="kt_app_sidebar_mobile_toggle">
-              <i class="ki-outline ki-abstract-14 fs-2"></i>
+            <!-- Dots launcher button -->
+            <button id="launcher-btn" aria-label="Open game menu" title="Games">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="3.5"  cy="3.5"  r="2" fill="#5E6278"/>
+                <circle cx="10"   cy="3.5"  r="2" fill="#5E6278"/>
+                <circle cx="16.5" cy="3.5"  r="2" fill="#5E6278"/>
+                <circle cx="3.5"  cy="10"   r="2" fill="#5E6278"/>
+                <circle cx="10"   cy="10"   r="2" fill="#5E6278"/>
+                <circle cx="16.5" cy="10"   r="2" fill="#5E6278"/>
+                <circle cx="3.5"  cy="16.5" r="2" fill="#5E6278"/>
+                <circle cx="10"   cy="16.5" r="2" fill="#5E6278"/>
+                <circle cx="16.5" cy="16.5" r="2" fill="#5E6278"/>
+              </svg>
             </button>
-            <a href="{% url 'parkour_game' %}" class="d-flex align-items-center gap-2">
+
+            <a href="{% url 'parkour_game' %}" class="d-flex align-items-center gap-2 ms-3">
               <i class="ki-outline ki-rocket text-primary fs-1"></i>
               <span class="text-gray-900 fw-bolder fs-4">Parkour</span>
             </a>
@@ -66,62 +157,16 @@
 
       <!--begin::Wrapper-->
       <div class="app-wrapper d-flex flex-column flex-column-fluid" id="kt_app_wrapper">
-        <div class="app-container container-fluid d-flex flex-row-fluid">
+        <div class="app-main flex-column flex-row-fluid" id="kt_app_main">
+          <div class="d-flex flex-column flex-column-fluid">
 
-          <!--begin::Sidebar-->
-          <div id="kt_app_sidebar" class="app-sidebar flex-column"
-            data-kt-drawer="true"
-            data-kt-drawer-name="app-sidebar"
-            data-kt-drawer-activate="{default: true, lg: false}"
-            data-kt-drawer-overlay="true"
-            data-kt-drawer-width="auto"
-            data-kt-drawer-direction="start"
-            data-kt-drawer-toggle="#kt_app_sidebar_mobile_toggle">
-
-            <div id="kt_app_sidebar_menu" data-kt-menu="true"
-              class="menu menu-sub-indention menu-rounded menu-column menu-active-bg menu-title-gray-600 menu-icon-gray-500 menu-state-primary menu-arrow-gray-500 fw-semibold fs-6 py-4 py-lg-6 ms-lg-n7 px-2 px-lg-0">
-
-              <div id="kt_app_sidebar_menu_wrapper" class="hover-scroll-y px-1 px-lg-5"
-                data-kt-scroll="true"
-                data-kt-scroll-activate="true"
-                data-kt-scroll-height="auto"
-                data-kt-scroll-dependencies="#kt_app_header"
-                data-kt-scroll-wrappers="#kt_app_sidebar_menu"
-                data-kt-scroll-offset="20px">
-
-                <div class="menu-item">
-                  <a class="menu-link active" href="{% url 'parkour_game' %}">
-                    <span class="menu-icon"><i class="ki-outline ki-rocket fs-2"></i></span>
-                    <span class="menu-title">Parkour Game</span>
-                  </a>
-                </div>
-
-                <div class="menu-item">
-                  <a class="menu-link" href="{% url 'fishing_portal' %}">
-                    <span class="menu-icon"><i class="ki-outline ki-fish fs-2"></i></span>
-                    <span class="menu-title">Fishing Game</span>
-                  </a>
-                </div>
-
-              </div>
+            <!--begin::Content-->
+            <div id="kt_app_content" class="app-content flex-column-fluid px-5 px-lg-10 pt-5 pt-lg-10 pb-10">
+              {% block content %}{% endblock %}
             </div>
+            <!--end::Content-->
+
           </div>
-          <!--end::Sidebar-->
-
-          <!--begin::Main-->
-          <div class="app-main flex-column flex-row-fluid" id="kt_app_main">
-            <div class="d-flex flex-column flex-column-fluid">
-
-              <!--begin::Content-->
-              <div id="kt_app_content" class="app-content flex-column-fluid px-5 px-lg-10 pt-5 pt-lg-10 pb-10">
-                {% block content %}{% endblock %}
-              </div>
-              <!--end::Content-->
-
-            </div>
-          </div>
-          <!--end::Main-->
-
         </div>
       </div>
       <!--end::Wrapper-->
@@ -131,6 +176,23 @@
 
   <script src="{% static 'assets/plugins/global/plugins.bundle.js' %}"></script>
   <script src="{% static 'assets/js/scripts.bundle.js' %}"></script>
+  <script>
+    (function () {
+      const btn = document.getElementById('launcher-btn');
+      const popup = document.getElementById('launcher-popup');
+
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        popup.classList.toggle('open');
+      });
+
+      document.addEventListener('click', function (e) {
+        if (!popup.contains(e.target)) {
+          popup.classList.remove('open');
+        }
+      });
+    })();
+  </script>
   {% block extra_js %}{% endblock %}
 </body>
 </html>

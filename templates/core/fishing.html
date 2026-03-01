@@ -969,7 +969,7 @@ function hideBanner(){
   clearTimeout(window._evBannerTid);
   document.getElementById('event-banner-inner').style.transform='translateY(-115%)';
 }
-['save-overlay','load-overlay','skins-overlay'].forEach(id=>{
+['saves-overlay','skins-overlay'].forEach(id=>{
   document.getElementById(id).addEventListener('click',e=>{if(e.target.id===id)document.getElementById(id).classList.remove('show');});
 });
 document.getElementById('fish-overlay').addEventListener('click',e=>{if(e.target.id==='fish-overlay')closeModal();});

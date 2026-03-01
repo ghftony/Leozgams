@@ -64,16 +64,17 @@
       text-decoration: none;
     }
     .launcher-item .li-icon {
-      width: 52px;
-      height: 52px;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 26px;
+      width: 64px;
+      height: 64px;
+      border-radius: 14px;
+      overflow: hidden;
+      flex-shrink: 0;
     }
-    .li-icon-parkour { background: #e8f0fe; color: #1a73e8; }
-    .li-icon-fishing  { background: #e6f4ea; color: #188038; }
+    .launcher-item .li-icon svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
   </style>
 </head>
 <body id="kt_app_body"
@@ -101,14 +102,72 @@
   <div id="launcher-popup">
     <div class="launcher-grid">
       <a class="launcher-item" href="{% url 'parkour_game' %}">
-        <div class="li-icon li-icon-parkour">
-          <i class="ki-outline ki-rocket"></i>
+        <div class="li-icon">
+          <!-- Parkour: character jumping between two platforms -->
+          <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Sky background -->
+            <rect width="64" height="64" fill="#e8f0fe" rx="14"/>
+            <!-- Left lower platform -->
+            <rect x="2" y="50" width="20" height="7" rx="3" fill="#1a73e8"/>
+            <!-- Right upper platform -->
+            <rect x="42" y="36" width="20" height="7" rx="3" fill="#1a73e8"/>
+            <!-- Speed lines (left of character) -->
+            <line x1="13" y1="28" x2="5"  y2="28" stroke="#1a73e8" stroke-width="1.5" stroke-linecap="round" opacity="0.45"/>
+            <line x1="13" y1="32" x2="6"  y2="32" stroke="#1a73e8" stroke-width="1.5" stroke-linecap="round" opacity="0.28"/>
+            <line x1="13" y1="24" x2="7"  y2="24" stroke="#1a73e8" stroke-width="1.5" stroke-linecap="round" opacity="0.20"/>
+            <!-- Character mid-jump (leaning right toward higher platform) -->
+            <!-- Head -->
+            <circle cx="32" cy="13" r="6" fill="#FF7043"/>
+            <!-- Torso (slight forward lean) -->
+            <line x1="31" y1="19" x2="29" y2="31" stroke="#FF7043" stroke-width="5" stroke-linecap="round"/>
+            <!-- Leading arm (right, reaching forward/up) -->
+            <line x1="30" y1="23" x2="42" y2="18" stroke="#FF7043" stroke-width="3.5" stroke-linecap="round"/>
+            <!-- Trailing arm (left, back) -->
+            <line x1="30" y1="23" x2="19" y2="27" stroke="#FF7043" stroke-width="3.5" stroke-linecap="round"/>
+            <!-- Leading leg (right, forward) -->
+            <line x1="29" y1="31" x2="38" y2="42" stroke="#FF7043" stroke-width="3.5" stroke-linecap="round"/>
+            <!-- Trailing leg (left, back and bent) -->
+            <line x1="29" y1="31" x2="20" y2="38" stroke="#FF7043" stroke-width="3.5" stroke-linecap="round"/>
+          </svg>
         </div>
         Parkour
       </a>
       <a class="launcher-item" href="{% url 'fishing_portal' %}">
-        <div class="li-icon li-icon-fishing">
-          <i class="ki-outline ki-fish"></i>
+        <div class="li-icon">
+          <!-- Fishing: person sitting on bank, rod out over water, fish visible -->
+          <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Sky -->
+            <rect width="64" height="64" fill="#e3f2fd" rx="14"/>
+            <!-- Water -->
+            <rect x="28" y="36" width="36" height="28" fill="#90caf9" rx="0"/>
+            <!-- Water surface wave -->
+            <path d="M28 37 Q38 33 48 37 Q56 41 64 37" stroke="#1565C0" stroke-width="1.5" fill="none"/>
+            <!-- Ground / bank -->
+            <rect x="0" y="42" width="34" height="22" fill="#6D4C41"/>
+            <rect x="0" y="40" width="34" height="5" rx="2" fill="#8D6E63"/>
+            <!-- Fishing line -->
+            <line x1="56" y1="9" x2="50" y2="37" stroke="#78909C" stroke-width="1"/>
+            <!-- Bobber -->
+            <circle cx="50" cy="37" r="3" fill="#E53935"/>
+            <circle cx="50" cy="35.5" r="1.5" fill="#ffffff" opacity="0.6"/>
+            <!-- Fish underwater -->
+            <ellipse cx="46" cy="50" rx="8" ry="4.5" fill="#29B6F6"/>
+            <path d="M54 50 L62 45 L62 55 Z" fill="#29B6F6"/>
+            <circle cx="42" cy="49" r="1.5" fill="white"/>
+            <circle cx="42.5" cy="49" r="0.7" fill="#1565C0"/>
+            <!-- Rod -->
+            <line x1="22" y1="28" x2="56" y2="9" stroke="#5D4037" stroke-width="2.5" stroke-linecap="round"/>
+            <!-- Person sitting on bank -->
+            <!-- Head -->
+            <circle cx="13" cy="20" r="6.5" fill="#FFAB40"/>
+            <!-- Body -->
+            <rect x="9" y="26" width="9" height="12" rx="3" fill="#1565C0"/>
+            <!-- Arm holding rod -->
+            <line x1="18" y1="30" x2="22" y2="28" stroke="#FFAB40" stroke-width="3" stroke-linecap="round"/>
+            <!-- Legs (sitting, dangling off bank edge) -->
+            <line x1="11" y1="38" x2="7"  y2="46" stroke="#1565C0" stroke-width="3.5" stroke-linecap="round"/>
+            <line x1="16" y1="38" x2="22" y2="46" stroke="#1565C0" stroke-width="3.5" stroke-linecap="round"/>
+          </svg>
         </div>
         Fishing
       </a>

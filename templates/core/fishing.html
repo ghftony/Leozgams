@@ -194,6 +194,11 @@ body{background:#1a1a2e;color:#eee;font-family:Arial,sans-serif;display:flex;fle
     <h2>💾 Save / Load</h2>
     <button class="btn" style="margin-bottom:10px" onclick="saveNewSlot()">💾 Save Current Game</button>
     <div id="saves-list" class="saves-list"></div>
+    <div style="margin-top:12px;border-top:1px solid #1a3a5e;padding-top:10px">
+      <div style="font-size:11px;color:#888;margin-bottom:4px">Import save code from old format:</div>
+      <textarea id="import-code-box" style="width:100%;height:60px;background:#0a1e35;color:#4fc3f7;border:1px solid #1a3a5e;border-radius:4px;padding:6px;font-size:10px;font-family:monospace;resize:none;box-sizing:border-box" placeholder="Paste save code here…"></textarea>
+      <button class="btn" style="margin-top:4px" onclick="importSaveCode()">📥 Import Code</button>
+    </div>
     <div class="row" style="margin-top:10px">
       <button class="btn mcls" onclick="document.getElementById('saves-overlay').classList.remove('show')">Close</button>
     </div>
@@ -949,6 +954,15 @@ function renderSavesList(){
   </div>`).join('');
 }
 function openSavesModal(){renderSavesList();document.getElementById('saves-overlay').classList.add('show');}
+function importSaveCode(){
+  const code=document.getElementById('import-code-box').value.trim();
+  if(!code)return;
+  if(applyCode(code)){
+    saveNewSlot();
+    document.getElementById('import-code-box').value='';
+    document.getElementById('saves-overlay').classList.remove('show');
+  }else{alert('Invalid or unreadable save code.');}
+}
 // Close overlays on backdrop click
 function closeModal(){
   if(portraitAnimId){cancelAnimationFrame(portraitAnimId);portraitAnimId=null;}

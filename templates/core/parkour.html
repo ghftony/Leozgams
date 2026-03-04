@@ -210,18 +210,27 @@
 
   function genPlatforms(fromX, count, diff) {
     const d     = Math.min(diff, 1);
-    const minG  = 80  + d * 70;
-    const maxG  = 200 + d * 100;
-    const minW  = Math.max(55, 180 - d * 110);
-    const maxW  = Math.max(90, 220 - d * 90);
+    const minG  = 80  + d * 50;
+    const maxG  = 160 + d * 60;          // was 200+d*100; reduced so gaps are always jumpable
+    const minW  = Math.max(65, 180 - d * 100);
+    const maxW  = Math.max(100, 220 - d * 80);
     const plats = [];
     let x = fromX;
+    let prevY = FLOOR_Y;                 // track previous y to clamp height differences
 
     for (let i = 0; i < count; i++) {
       const w = rnd(minW, maxW);
       if (i > 0) x += rnd(minG, maxG);
       const elevated = Math.random() > 0.38;
-      const y = elevated ? FLOOR_Y - rnd(55, 175) : FLOOR_Y;
+      let y;
+      if (elevated) {
+        const rawY = FLOOR_Y - rnd(55, 155);
+        y = Math.max(rawY, prevY - 105); // never more than 105 px above previous platform
+        y = Math.min(y, FLOOR_Y);
+      } else {
+        y = FLOOR_Y;
+      }
+      prevY = y;
       const r = Math.random();
 
       let type = "static";
@@ -316,6 +325,7 @@
       magnet: false, magnetTicks: 0,
       boost:  false, boostTicks:  0,
       combo: 0, comboTicks: 0,
+      shieldSparkTick: 0,
     };
   }
 
@@ -397,6 +407,7 @@
     pu.forEach(n => {
       if (p[n + "Ticks"] > 0) { p[n + "Ticks"]--; if (p[n + "Ticks"] <= 0) p[n] = false; }
     });
+    if (p.shieldSparkTick > 0) p.shieldSparkTick--;
     if (!p.boost && p.vx !== 0) {} // no-op: speed applied below
 
     // ── Combo decay ──
@@ -479,7 +490,15 @@
         }
         // Spikes
         if (pl.spike && p.x + p.w > pl.x + 3 && p.x < pl.x + pl.w - 3) {
-          doDie(); return;
+          if (p.shield) {
+            // Shield makes player invincible to spikes — sparks every ~15 frames
+            if (p.shieldSparkTick <= 0) {
+              spawnParts(parts, p.x+p.w/2, pl.y, 7, C.shield, 3.5, 22);
+              p.shieldSparkTick = 15;
+            }
+          } else {
+            doDie(); return;
+          }
         }
       }
 
@@ -539,8 +558,19 @@
     }
     state.platforms = state.platforms.filter(pl => pl.x + pl.w > camX - 320);
 
-    // ── Fall ──
-    if (p.y > H + 160) { doDie(); return; }
+    // ── Bottom floor (only while shielded) ──
+    if (p.shield && p.y + p.h >= H - 4) {
+      if (!p.wasOnGround) {
+        spawnParts(parts, p.x + p.w/2, H - 4, 8, C.shield, 2.5, 20);
+      }
+      p.y = H - p.h - 4;
+      p.vy = 0;
+      p.onGround = true;
+      p.jumpsLeft = 2;
+    }
+    // ── Fall death (also fires if shield expired while on bottom floor) ──
+    if (p.y > H + 80) { doDie(); return; }
+    if (!p.shield && p.y + p.h > H + 10) { doDie(); return; }
 
     // ── Run anim ──
     if (p.onGround && Math.abs(p.vx) > 0.5) {
@@ -822,6 +852,22 @@
     ctx.globalAlpha = 1;
 
     ctx.restore(); // end world space
+
+    // ── Shield bottom floor indicator ──
+    if (state.phase === "running" && state.player.shield) {
+      ctx.save();
+      ctx.fillStyle = C.shield + "22";
+      ctx.fillRect(0, H - 16, W, 16);
+      ctx.shadowColor = C.shield; ctx.shadowBlur = 18;
+      ctx.strokeStyle = C.shield; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.moveTo(0, H - 16); ctx.lineTo(W, H - 16); ctx.stroke();
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = C.shield + "99"; ctx.font = "bold 10px Inter, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("SHIELD FLOOR", W / 2, H - 4);
+      ctx.textAlign = "left";
+      ctx.restore();
+    }
 
     // ── Floating texts (screen space) ──
     floats.forEach(f => {

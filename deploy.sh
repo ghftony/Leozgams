@@ -5,7 +5,7 @@
 # 1. SSH into the VPS
 # 2. Pull latest code and run deploy steps:
 #      cd /home/gohifun
-#      git pull origin main
+#      git pull origin master
 #      source venv/bin/activate
 #      python manage.py migrate
 #      bash deploy.sh

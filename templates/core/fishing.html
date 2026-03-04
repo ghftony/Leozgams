@@ -113,13 +113,17 @@
 
   // ─── Rods ─────────────────────────────────────────────────────────────────
   const RODS = [
-    { id: "wooden",   name: "Wooden Rod",      cost: 0,    castPower: 0.65, reelSpeed: 1.0, rareBonus: 0,    color: "#8B5E3C", tipColor: "#c8a060" },
+    { id: "wooden",   name: "Wooden Rod",      cost: 0,     castPower: 0.65, reelSpeed: 1.0, rareBonus: 0,    color: "#8B5E3C", tipColor: "#c8a060" },
     { id: "bamboo",   name: "Bamboo Rod",       cost: 50,   castPower: 0.78, reelSpeed: 1.2, rareBonus: 0.05, color: "#7ac74f", tipColor: "#b5e88d" },
     { id: "steel",    name: "Steel Rod",        cost: 150,  castPower: 0.88, reelSpeed: 1.5, rareBonus: 0.10, color: "#78909c", tipColor: "#b0bec5" },
     { id: "carbon",   name: "Carbon Fiber Rod", cost: 350,  castPower: 1.00, reelSpeed: 1.9, rareBonus: 0.15, color: "#37474f", tipColor: "#90a4ae" },
-    { id: "golden",   name: "Golden Rod",       cost: 800,  castPower: 1.10, reelSpeed: 2.2, rareBonus: 0.28, color: "#f6c90e", tipColor: "#ffe57a" },
-    { id: "crystal",  name: "Crystal Rod",      cost: 1800, castPower: 1.20, reelSpeed: 2.7, rareBonus: 0.40, color: "#80deea", tipColor: "#e0f7fa" },
-    { id: "dragon",   name: "Dragon Rod",       cost: 4000, castPower: 1.35, reelSpeed: 3.5, rareBonus: 0.60, color: "#f64e60", tipColor: "#ff8a95" },
+    { id: "pro",      name: "Pro Angler Rod",   cost: 600,  castPower: 1.06, reelSpeed: 2.0, rareBonus: 0.22, color: "#5c6bc0", tipColor: "#9fa8da" },
+    { id: "golden",   name: "Golden Rod",       cost: 1000, castPower: 1.10, reelSpeed: 2.2, rareBonus: 0.28, color: "#f6c90e", tipColor: "#ffe57a" },
+    { id: "crystal",  name: "Crystal Rod",      cost: 2200, castPower: 1.20, reelSpeed: 2.7, rareBonus: 0.40, color: "#80deea", tipColor: "#e0f7fa" },
+    { id: "dragon",   name: "Dragon Rod",       cost: 5000, castPower: 1.35, reelSpeed: 3.5, rareBonus: 0.60, color: "#f64e60", tipColor: "#ff8a95" },
+    { id: "abyssal",  name: "Abyssal Rod",      cost: 9000, castPower: 1.45, reelSpeed: 4.0, rareBonus: 0.75, color: "#4a148c", tipColor: "#ce93d8" },
+    { id: "celestial",name: "Celestial Rod",    cost: 18000,castPower: 1.60, reelSpeed: 5.0, rareBonus: 0.90, color: "#ffd740", tipColor: "#ffffff" },
+    { id: "ancient",  name: "Ancient Relic Rod",cost: 35000,castPower: 1.80, reelSpeed: 6.5, rareBonus: 1.20, color: "#a5622a", tipColor: "#ffe0b2" },
   ];
 
   // ─── Fish definitions ─────────────────────────────────────────────────────
@@ -181,6 +185,31 @@
     {
       id: "goldfish", name: "Golden Koi", rarity: "legendary", value: 1000, weight: [0.5, 3.0],
       draw(cx, cy, sc, facing) { drawKoi(cx, cy, sc, facing); }
+    },
+    // ── New fish ──────────────────────────────────────────────────────────────
+    {
+      id: "carp", name: "Common Carp", rarity: "common", value: 10, weight: [0.5, 4.0],
+      draw(cx, cy, sc, facing) { drawCarp(cx, cy, sc, facing); }
+    },
+    {
+      id: "flounder", name: "Flounder", rarity: "uncommon", value: 40, weight: [0.3, 1.5],
+      draw(cx, cy, sc, facing) { drawFlounder(cx, cy, sc, facing); }
+    },
+    {
+      id: "seahorse", name: "Seahorse", rarity: "rare", value: 85, weight: [0.01, 0.05],
+      draw(cx, cy, sc, facing) { drawSeahorse(cx, cy, sc, facing); }
+    },
+    {
+      id: "eel", name: "Electric Eel", rarity: "epic", value: 180, weight: [5, 20],
+      draw(cx, cy, sc, facing) { drawElectricEel(cx, cy, sc, facing); }
+    },
+    {
+      id: "flyingfish", name: "Flying Fish", rarity: "epic", value: 220, weight: [0.2, 1.0],
+      draw(cx, cy, sc, facing) { drawFlyingFish(cx, cy, sc, facing); }
+    },
+    {
+      id: "narwhal", name: "Narwhal", rarity: "legendary", value: 1200, weight: [400, 1600],
+      draw(cx, cy, sc, facing) { drawNarwhal(cx, cy, sc, facing); }
     },
   ];
 
@@ -619,6 +648,275 @@
     // Eye
     ctx.fillStyle="#111"; ctx.beginPath(); ctx.arc(L*0.75, -bh*0.1, 3.5*sc, 0, Math.PI*2); ctx.fill();
     ctx.fillStyle="#f6c90e"; ctx.beginPath(); ctx.arc(L*0.75, -bh*0.1, 1.5*sc, 0, Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+
+  // ─── New fish draw functions ──────────────────────────────────────────────
+
+  function drawCarp(cx, cy, sc, dir) {
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.scale(dir, 1);
+    const L = 38*sc, bh = 15*sc;
+    // Deep olive-gold body, chunky
+    ctx.fillStyle = "#8a7040";
+    ctx.beginPath(); ctx.ellipse(0, 0, L, bh, 0, 0, Math.PI*2); ctx.fill();
+    // Scales pattern
+    ctx.strokeStyle = "#6a5020"; ctx.lineWidth = 1*sc; ctx.globalAlpha = 0.5;
+    for (let row = 0; row < 3; row++) {
+      for (let col = 0; col < 5; col++) {
+        const sx = -L*0.6 + col*L*0.28 + (row%2)*L*0.14;
+        const sy = -bh*0.4 + row*bh*0.4;
+        ctx.beginPath(); ctx.arc(sx, sy, 5*sc, 0, Math.PI); ctx.stroke();
+      }
+    }
+    ctx.globalAlpha = 1;
+    // Belly
+    ctx.fillStyle = "#d4b870";
+    ctx.beginPath(); ctx.ellipse(L*0.05, bh*0.35, L*0.55, bh*0.45, 0, 0, Math.PI*2); ctx.fill();
+    // Dorsal fin (long, rounded)
+    ctx.fillStyle = "#705020";
+    ctx.beginPath();
+    ctx.moveTo(-L*0.4, -bh); ctx.quadraticCurveTo(0, -bh-16*sc, L*0.4, -bh); ctx.closePath(); ctx.fill();
+    // Tail (rounded fork)
+    ctx.fillStyle = "#705020";
+    ctx.beginPath();
+    ctx.moveTo(-L, 0); ctx.lineTo(-L-20*sc, -14*sc); ctx.lineTo(-L-10*sc, 0);
+    ctx.lineTo(-L-20*sc, 14*sc); ctx.closePath(); ctx.fill();
+    // Barbels (2 pairs)
+    ctx.strokeStyle = "#4a3010"; ctx.lineWidth = 1.2*sc;
+    [[L*0.9, -2*sc, L*1.12, -9*sc],[L*0.9, 2*sc, L*1.1, 8*sc]].forEach(([x1,y1,x2,y2])=>{
+      ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+    });
+    // Eye
+    ctx.fillStyle="#222"; ctx.beginPath(); ctx.arc(L*0.76, -2*sc, 3.5*sc, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle="#fff"; ctx.beginPath(); ctx.arc(L*0.76+sc, -3*sc, 1.4*sc, 0, Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+
+  function drawFlounder(cx, cy, sc, dir) {
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.scale(dir, 1);
+    const L = 32*sc, bh = 22*sc; // flat & wide
+    // Flat oval body (lying sideways — tilt for visual)
+    ctx.save(); ctx.rotate(-0.25);
+    ctx.fillStyle = "#c8a860";
+    ctx.beginPath(); ctx.ellipse(0, 0, L, bh, 0, 0, Math.PI*2); ctx.fill();
+    // Sandy spots
+    ctx.fillStyle = "#7a5a20"; ctx.globalAlpha = 0.45;
+    [[-10*sc,-8*sc],[5*sc,6*sc],[18*sc,-4*sc],[-18*sc,5*sc],[2*sc,-14*sc]].forEach(([dx,dy])=>{
+      ctx.beginPath(); ctx.arc(dx, dy, 4.5*sc, 0, Math.PI*2); ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+    // White underside strip
+    ctx.fillStyle = "#f5ecd0";
+    ctx.beginPath(); ctx.ellipse(4*sc, 8*sc, L*0.55, bh*0.38, 0, 0, Math.PI*2); ctx.fill();
+    ctx.restore();
+    // Tail
+    ctx.fillStyle = "#a07830";
+    ctx.beginPath();
+    ctx.moveTo(-L*0.92, -4*sc); ctx.lineTo(-L-18*sc, -16*sc); ctx.lineTo(-L-18*sc, 16*sc); ctx.lineTo(-L*0.92, 4*sc);
+    ctx.closePath(); ctx.fill();
+    // Both eyes on same side (flat fish characteristic)
+    ctx.fillStyle="#222";
+    ctx.beginPath(); ctx.arc(L*0.6, -bh*0.32, 3.5*sc, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(L*0.72, -bh*0.48, 3*sc, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle="#fff";
+    ctx.beginPath(); ctx.arc(L*0.6+sc, -bh*0.32-sc, 1.3*sc, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(L*0.72+sc, -bh*0.48-sc, 1.1*sc, 0, Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+
+  function drawSeahorse(cx, cy, sc, dir) {
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.scale(dir, 1);
+    // Seahorse is upright — draw vertically
+    const S = sc * 1.1;
+    // Tail (curled)
+    ctx.strokeStyle = "#e8a030"; ctx.lineWidth = 7*S; ctx.lineCap="round";
+    ctx.beginPath();
+    ctx.moveTo(0, 20*S);
+    ctx.bezierCurveTo(-20*S, 28*S, -22*S, 10*S, -8*S, 4*S);
+    ctx.stroke();
+    // Body segments
+    ctx.strokeStyle = "#d4882a"; ctx.lineWidth = 12*S;
+    ctx.beginPath(); ctx.moveTo(0, -10*S); ctx.lineTo(0, 20*S); ctx.stroke();
+    // Lighter belly
+    ctx.strokeStyle = "#f5d080"; ctx.lineWidth = 5*S;
+    ctx.beginPath(); ctx.moveTo(3*S, -8*S); ctx.lineTo(3*S, 18*S); ctx.stroke();
+    // Dorsal fin
+    ctx.fillStyle = "#c06820"; ctx.globalAlpha=0.8;
+    ctx.beginPath();
+    ctx.moveTo(8*S, -8*S); ctx.quadraticCurveTo(18*S, -14*S, 8*S, -18*S); ctx.closePath(); ctx.fill();
+    ctx.globalAlpha=1;
+    // Neck & snout
+    ctx.fillStyle = "#e8a030";
+    ctx.beginPath(); ctx.ellipse(4*S, -16*S, 6*S, 9*S, 0.3, 0, Math.PI*2); ctx.fill();
+    // Snout (long tube)
+    ctx.strokeStyle = "#c07820"; ctx.lineWidth = 4*S; ctx.lineCap="round";
+    ctx.beginPath(); ctx.moveTo(8*S, -22*S); ctx.lineTo(20*S, -28*S); ctx.stroke();
+    // Crown spines
+    ctx.strokeStyle = "#c06820"; ctx.lineWidth=2*S;
+    [[-2*S,-28*S,-6*S,-34*S],[2*S,-30*S,2*S,-37*S],[6*S,-28*S,9*S,-34*S]].forEach(([x1,y1,x2,y2])=>{
+      ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+    });
+    // Eye
+    ctx.fillStyle="#111"; ctx.beginPath(); ctx.arc(8*S, -22*S, 3*S, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle="#fff"; ctx.beginPath(); ctx.arc(9*S, -23*S, 1.2*S, 0, Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+
+  function drawElectricEel(cx, cy, sc, dir) {
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.scale(dir, 1);
+    // Long sinuous body
+    ctx.strokeStyle = "#3a5a2a"; ctx.lineWidth = 14*sc; ctx.lineCap="round";
+    ctx.beginPath();
+    ctx.moveTo(55*sc, 0);
+    ctx.bezierCurveTo(30*sc, -10*sc, -10*sc, 10*sc, -55*sc, 0);
+    ctx.stroke();
+    // Darker top
+    ctx.strokeStyle = "#1a3a10"; ctx.lineWidth = 5*sc;
+    ctx.beginPath();
+    ctx.moveTo(55*sc, -4*sc);
+    ctx.bezierCurveTo(30*sc, -13*sc, -10*sc, 5*sc, -55*sc, -4*sc);
+    ctx.stroke();
+    // Yellow belly stripe
+    ctx.strokeStyle = "#c8c020"; ctx.lineWidth = 3*sc; ctx.globalAlpha=0.8;
+    ctx.beginPath();
+    ctx.moveTo(50*sc, 3*sc);
+    ctx.bezierCurveTo(25*sc, -5*sc, -8*sc, 12*sc, -50*sc, 4*sc);
+    ctx.stroke();
+    ctx.globalAlpha=1;
+    // Electric glow along body
+    ctx.shadowColor="#88ffaa"; ctx.shadowBlur=12;
+    ctx.strokeStyle="rgba(100,255,150,0.25)"; ctx.lineWidth=18*sc;
+    ctx.beginPath();
+    ctx.moveTo(55*sc, 0);
+    ctx.bezierCurveTo(30*sc, -10*sc, -10*sc, 10*sc, -55*sc, 0);
+    ctx.stroke();
+    ctx.shadowBlur=0;
+    // Electric sparks
+    ctx.strokeStyle="#ccff44"; ctx.lineWidth=1.5*sc; ctx.globalAlpha=0.7;
+    [[-20*sc,-6*sc],[ 10*sc,8*sc],[35*sc,-5*sc]].forEach(([bx,by])=>{
+      ctx.beginPath();
+      ctx.moveTo(bx-5*sc, by-5*sc); ctx.lineTo(bx, by); ctx.lineTo(bx+5*sc, by-4*sc); ctx.stroke();
+    });
+    ctx.globalAlpha=1;
+    // Head
+    ctx.fillStyle="#2a4a1a";
+    ctx.beginPath(); ctx.ellipse(57*sc, 0, 10*sc, 7*sc, 0, 0, Math.PI*2); ctx.fill();
+    // Tail (tapered)
+    ctx.fillStyle="#1a3a10";
+    ctx.beginPath(); ctx.ellipse(-57*sc, 0, 6*sc, 3*sc, 0, 0, Math.PI*2); ctx.fill();
+    // Eye
+    ctx.fillStyle="#ccff00"; ctx.shadowColor="#ccff00"; ctx.shadowBlur=8;
+    ctx.beginPath(); ctx.arc(63*sc, -1*sc, 3.5*sc, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle="#111"; ctx.shadowBlur=0;
+    ctx.beginPath(); ctx.arc(63*sc, -1*sc, 1.8*sc, 0, Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+
+  function drawFlyingFish(cx, cy, sc, dir) {
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.scale(dir, 1);
+    const L = 36*sc, bh = 11*sc;
+    // Streamlined silver-blue body
+    ctx.fillStyle = "#5588cc";
+    ctx.beginPath(); ctx.ellipse(0, 0, L, bh, 0, 0, Math.PI*2); ctx.fill();
+    // Iridescent sheen
+    ctx.fillStyle = "#aaddff"; ctx.globalAlpha=0.45;
+    ctx.beginPath(); ctx.ellipse(4*sc, -2*sc, L*0.6, bh*0.5, -0.1, 0, Math.PI*2); ctx.fill();
+    ctx.globalAlpha=1;
+    // Large wing-like pectoral fins (the key feature!)
+    ctx.fillStyle = "#88aae0"; ctx.globalAlpha=0.85;
+    // Upper wing
+    ctx.beginPath();
+    ctx.moveTo(L*0.3, -bh*0.5);
+    ctx.bezierCurveTo(L*0.1, -bh*3.0, -L*0.3, -bh*3.2, -L*0.5, -bh*0.8);
+    ctx.lineTo(-L*0.1, -bh*0.5);
+    ctx.closePath(); ctx.fill();
+    // Lower wing (mirror)
+    ctx.beginPath();
+    ctx.moveTo(L*0.3, bh*0.5);
+    ctx.bezierCurveTo(L*0.1, bh*3.0, -L*0.3, bh*3.2, -L*0.5, bh*0.8);
+    ctx.lineTo(-L*0.1, bh*0.5);
+    ctx.closePath(); ctx.fill();
+    ctx.globalAlpha=1;
+    // Wing veins
+    ctx.strokeStyle="#6688bb"; ctx.lineWidth=0.8*sc; ctx.globalAlpha=0.6;
+    [1,2,3].forEach(i=>{
+      ctx.beginPath();
+      ctx.moveTo(L*0.2, -bh*0.4);
+      ctx.lineTo(L*0.2 - i*L*0.22, -bh*(1.2+i*0.5));
+      ctx.stroke();
+    });
+    ctx.globalAlpha=1;
+    // Tail (forked, lower lobe longer — flying fish trait)
+    ctx.fillStyle = "#3366aa";
+    ctx.beginPath();
+    ctx.moveTo(-L, 0); ctx.lineTo(-L-14*sc, -10*sc); ctx.lineTo(-L-6*sc, -2*sc);
+    ctx.moveTo(-L, 0); ctx.lineTo(-L-22*sc, 16*sc); ctx.lineTo(-L-8*sc, 2*sc);
+    ctx.closePath(); ctx.fill();
+    // Eye
+    ctx.fillStyle="#111"; ctx.beginPath(); ctx.arc(L*0.8, -bh*0.1, 3*sc, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle="#fff"; ctx.beginPath(); ctx.arc(L*0.8+sc, -bh*0.1-sc, 1.2*sc, 0, Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+
+  function drawNarwhal(cx, cy, sc, dir) {
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.scale(dir, 1);
+    const L = 50*sc, bh = 14*sc;
+    // Pale blue-grey body
+    ctx.fillStyle = "#90b8d0";
+    ctx.beginPath(); ctx.ellipse(-4*sc, 0, L, bh, 0, 0, Math.PI*2); ctx.fill();
+    // White belly
+    ctx.fillStyle = "#e8f4f8";
+    ctx.beginPath(); ctx.ellipse(0, 5*sc, L*0.65, bh*0.5, 0, 0, Math.PI*2); ctx.fill();
+    // Dark mottling patches
+    ctx.fillStyle = "#5a7a90"; ctx.globalAlpha=0.35;
+    [[-20*sc,-6*sc],[-5*sc,-10*sc],[15*sc,-4*sc],[-35*sc,2*sc]].forEach(([dx,dy])=>{
+      ctx.beginPath(); ctx.ellipse(dx, dy, 9*sc, 5*sc, Math.random(), 0, Math.PI*2); ctx.fill();
+    });
+    ctx.globalAlpha=1;
+    // Iconic spiral tusk
+    ctx.save();
+    const tuskGrad = ctx.createLinearGradient(L, 0, L+55*sc, 0);
+    tuskGrad.addColorStop(0, "#e8e0d0");
+    tuskGrad.addColorStop(1, "#f8f4ec");
+    ctx.strokeStyle = tuskGrad; ctx.lineWidth = 4*sc; ctx.lineCap="round";
+    ctx.beginPath(); ctx.moveTo(L*0.85, -2*sc); ctx.lineTo(L+55*sc, -2*sc); ctx.stroke();
+    // Spiral grooves on tusk
+    ctx.strokeStyle = "#c0b8a8"; ctx.lineWidth = 1.2*sc;
+    for (let i=0; i<8; i++) {
+      const tx = L*0.85 + i*7*sc;
+      ctx.beginPath(); ctx.moveTo(tx, -5*sc); ctx.lineTo(tx+3*sc, 1*sc); ctx.stroke();
+    }
+    ctx.restore();
+    // Dorsal ridge (narwhals have a dorsal ridge, not a fin)
+    ctx.fillStyle = "#7098b0";
+    ctx.beginPath();
+    ctx.moveTo(-L*0.2, -bh); ctx.quadraticCurveTo(-L*0.05, -bh-7*sc, L*0.1, -bh); ctx.closePath(); ctx.fill();
+    // Tail flukes (horizontal — mammal)
+    ctx.fillStyle = "#7098b0";
+    ctx.beginPath();
+    ctx.moveTo(-L+4*sc, -2*sc);
+    ctx.lineTo(-L-20*sc, -16*sc); ctx.lineTo(-L-14*sc, -3*sc);
+    ctx.moveTo(-L+4*sc, 2*sc);
+    ctx.lineTo(-L-20*sc, 16*sc); ctx.lineTo(-L-14*sc, 3*sc);
+    ctx.closePath(); ctx.fill();
+    // Eye
+    ctx.fillStyle="#222"; ctx.beginPath(); ctx.arc(L*0.74, -bh*0.2, 4*sc, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle="#fff"; ctx.beginPath(); ctx.arc(L*0.74+1.2*sc, -bh*0.2-1.2*sc, 1.6*sc, 0, Math.PI*2); ctx.fill();
+    // Blowhole
+    ctx.fillStyle="#5a7890";
+    ctx.beginPath(); ctx.ellipse(L*0.55, -bh, 3*sc, 1.5*sc, 0, 0, Math.PI*2); ctx.fill();
     ctx.restore();
   }
 

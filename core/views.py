@@ -7,3 +7,7 @@ def home(request):
 
 def parkour_game(request):
     return render(request, "core/parkour.html")
+
+
+def fishing_game(request):
+    return render(request, "core/fishing.html")

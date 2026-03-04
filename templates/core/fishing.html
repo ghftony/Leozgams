@@ -1,0 +1,1209 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Fishing Game{% endblock %}
+
+{% block extra_css %}
+<style>
+  #fishing-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+  #fishing-canvas {
+    border: 2px solid #3699ff;
+    border-radius: 8px;
+    background: #040e1c;
+    display: block;
+    cursor: default;
+    outline: none;
+  }
+  #fishing-hud {
+    display: flex;
+    gap: 28px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #a1a5b7;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  #fishing-hud span { color: #3699ff; }
+  #fishing-hud .gold-val { color: #f6c90e; }
+  #rod-selector {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .rod-btn {
+    padding: 6px 14px;
+    border-radius: 6px;
+    border: 2px solid #2d3748;
+    background: #131929;
+    color: #a1a5b7;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .rod-btn:hover { border-color: #3699ff; color: #fff; }
+  .rod-btn.active { border-color: #3699ff; background: #1c2e4a; color: #fff; }
+  .rod-btn .rod-cost { color: #f6c90e; font-size: 0.75rem; }
+  .rod-btn.owned { border-color: #50e050; }
+  .rod-btn.owned .rod-cost { color: #50e050; }
+  #controls-hint {
+    color: #5e6278;
+    font-size: 0.8rem;
+    text-align: center;
+  }
+  #fish-log {
+    max-height: 140px;
+    overflow-y: auto;
+    width: 680px;
+    background: #0b1120;
+    border: 1px solid #1e2d42;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 0.8rem;
+    color: #7e8299;
+  }
+  #fish-log .entry { padding: 1px 0; border-bottom: 1px solid #151e2e; }
+  #fish-log .entry:last-child { border: none; }
+  #fish-log .common   { color: #a1a5b7; }
+  #fish-log .uncommon { color: #50d890; }
+  #fish-log .rare     { color: #3699ff; }
+  #fish-log .epic     { color: #cc44ff; }
+  #fish-log .legendary{ color: #f6c90e; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column align-items-start mb-5">
+  <h1 class="fs-2 fw-bolder text-gray-900 mb-1">Fishing Game</h1>
+  <p class="text-muted mb-0">Cast your line and reel in the big catch!</p>
+</div>
+
+<div id="fishing-wrapper">
+  <div id="fishing-hud">
+    <div>Gold: <span id="gold-display" class="gold-val">0</span></div>
+    <div>Fish Caught: <span id="caught-display">0</span></div>
+    <div>Rod: <span id="rod-display">Wooden Rod</span></div>
+  </div>
+  <canvas id="fishing-canvas" width="820" height="480" tabindex="0"></canvas>
+  <div id="rod-selector">
+    <!-- populated by JS -->
+  </div>
+  <div id="controls-hint">
+    Click / Space to cast &nbsp;|&nbsp; Hold to charge &nbsp;|&nbsp; Release to launch &nbsp;|&nbsp; Wait for a bite, then click to reel in!
+  </div>
+  <div id="fish-log"><em>Your catch log will appear here…</em></div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  "use strict";
+
+  const canvas = document.getElementById("fishing-canvas");
+  const ctx    = canvas.getContext("2d");
+  const W = canvas.width, H = canvas.height;
+
+  // ─── Rods ─────────────────────────────────────────────────────────────────
+  const RODS = [
+    { id: "wooden",   name: "Wooden Rod",      cost: 0,    castPower: 0.65, reelSpeed: 1.0, rareBonus: 0,    color: "#8B5E3C", tipColor: "#c8a060" },
+    { id: "bamboo",   name: "Bamboo Rod",       cost: 50,   castPower: 0.78, reelSpeed: 1.2, rareBonus: 0.05, color: "#7ac74f", tipColor: "#b5e88d" },
+    { id: "steel",    name: "Steel Rod",        cost: 150,  castPower: 0.88, reelSpeed: 1.5, rareBonus: 0.10, color: "#78909c", tipColor: "#b0bec5" },
+    { id: "carbon",   name: "Carbon Fiber Rod", cost: 350,  castPower: 1.00, reelSpeed: 1.9, rareBonus: 0.15, color: "#37474f", tipColor: "#90a4ae" },
+    { id: "golden",   name: "Golden Rod",       cost: 800,  castPower: 1.10, reelSpeed: 2.2, rareBonus: 0.28, color: "#f6c90e", tipColor: "#ffe57a" },
+    { id: "crystal",  name: "Crystal Rod",      cost: 1800, castPower: 1.20, reelSpeed: 2.7, rareBonus: 0.40, color: "#80deea", tipColor: "#e0f7fa" },
+    { id: "dragon",   name: "Dragon Rod",       cost: 4000, castPower: 1.35, reelSpeed: 3.5, rareBonus: 0.60, color: "#f64e60", tipColor: "#ff8a95" },
+  ];
+
+  // ─── Fish definitions ─────────────────────────────────────────────────────
+  // Each fish has a custom draw function that paints a unique picture on canvas.
+  const FISH = [
+    {
+      id: "minnow", name: "Minnow", rarity: "common", value: 5, weight: [0.05, 0.15],
+      color: "#6ec6f5", finColor: "#4aabde",
+      draw(cx, cy, sc, facing) { drawGenericFish(cx, cy, sc, facing, "#6ec6f5", "#4aabde", "#fff", false, 0.7); }
+    },
+    {
+      id: "perch", name: "Perch", rarity: "common", value: 8, weight: [0.15, 0.35],
+      draw(cx, cy, sc, facing) { drawStripedFish(cx, cy, sc, facing, "#d4a843", "#8B6914", "#e8c56a", 3); }
+    },
+    {
+      id: "catfish", name: "Catfish", rarity: "common", value: 12, weight: [0.3, 0.7],
+      draw(cx, cy, sc, facing) { drawCatfish(cx, cy, sc, facing); }
+    },
+    {
+      id: "salmon", name: "Salmon", rarity: "uncommon", value: 25, weight: [1.0, 3.5],
+      draw(cx, cy, sc, facing) { drawGenericFish(cx, cy, sc, facing, "#e87060", "#c04030", "#fbb", true, 1.3); }
+    },
+    {
+      id: "bass", name: "Largemouth Bass", rarity: "uncommon", value: 30, weight: [0.8, 2.5],
+      draw(cx, cy, sc, facing) { drawStripedFish(cx, cy, sc, facing, "#4a7c3f", "#2a5020", "#7aba6a", 2); }
+    },
+    {
+      id: "trout", name: "Rainbow Trout", rarity: "uncommon", value: 35, weight: [0.5, 2.0],
+      draw(cx, cy, sc, facing) { drawRainbowTrout(cx, cy, sc, facing); }
+    },
+    {
+      id: "clownfish", name: "Clownfish", rarity: "rare", value: 60, weight: [0.08, 0.25],
+      draw(cx, cy, sc, facing) { drawClownfish(cx, cy, sc, facing); }
+    },
+    {
+      id: "pufferfish", name: "Pufferfish", rarity: "rare", value: 75, weight: [0.2, 0.6],
+      draw(cx, cy, sc, facing) { drawPufferfish(cx, cy, sc, facing); }
+    },
+    {
+      id: "swordfish", name: "Swordfish", rarity: "rare", value: 90, weight: [2.0, 8.0],
+      draw(cx, cy, sc, facing) { drawSwordfish(cx, cy, sc, facing); }
+    },
+    {
+      id: "tuna", name: "Bluefin Tuna", rarity: "epic", value: 150, weight: [30, 120],
+      draw(cx, cy, sc, facing) { drawGenericFish(cx, cy, sc, facing, "#1a3a6a", "#0d2040", "#2255aa", true, 1.8); }
+    },
+    {
+      id: "shark", name: "Great White Shark", rarity: "epic", value: 200, weight: [80, 300],
+      draw(cx, cy, sc, facing) { drawShark(cx, cy, sc, facing); }
+    },
+    {
+      id: "anglerfish", name: "Anglerfish", rarity: "legendary", value: 500, weight: [5, 40],
+      draw(cx, cy, sc, facing) { drawAnglerfish(cx, cy, sc, facing); }
+    },
+    {
+      id: "oarfish", name: "Giant Oarfish", rarity: "legendary", value: 800, weight: [100, 500],
+      draw(cx, cy, sc, facing) { drawOarfish(cx, cy, sc, facing); }
+    },
+    {
+      id: "goldfish", name: "Golden Koi", rarity: "legendary", value: 1000, weight: [0.5, 3.0],
+      draw(cx, cy, sc, facing) { drawKoi(cx, cy, sc, facing); }
+    },
+  ];
+
+  const RARITY_COLOR = { common: "#a1a5b7", uncommon: "#50d890", rare: "#3699ff", epic: "#cc44ff", legendary: "#f6c90e" };
+
+  // ─── Fish drawing functions ────────────────────────────────────────────────
+  function drawGenericFish(cx, cy, sc, dir, bodyCol, finCol, bellyCol, hasDorsal, lenMul) {
+    const L = 34 * sc * (lenMul || 1);
+    const bh = 14 * sc;
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.scale(dir, 1);
+    // Body
+    ctx.fillStyle = bodyCol;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, L, bh, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Belly
+    ctx.fillStyle = bellyCol;
+    ctx.beginPath();
+    ctx.ellipse(L * 0.08, bh * 0.25, L * 0.6, bh * 0.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Tail
+    ctx.fillStyle = finCol;
+    ctx.beginPath();
+    ctx.moveTo(-L, 0);
+    ctx.lineTo(-L - 18*sc, -13*sc);
+    ctx.lineTo(-L - 18*sc,  13*sc);
+    ctx.closePath();
+    ctx.fill();
+    // Dorsal fin
+    if (hasDorsal) {
+      ctx.fillStyle = finCol;
+      ctx.beginPath();
+      ctx.moveTo(-L*0.1, -bh);
+      ctx.lineTo( L*0.3, -bh - 10*sc);
+      ctx.lineTo( L*0.5, -bh);
+      ctx.closePath();
+      ctx.fill();
+    }
+    // Pectoral fin
+    ctx.fillStyle = finCol;
+    ctx.beginPath();
+    ctx.ellipse(L*0.1, bh*0.5, 9*sc, 5*sc, 0.4, 0, Math.PI*2);
+    ctx.fill();
+    // Eye
+    ctx.fillStyle = "#111";
+    ctx.beginPath();
+    ctx.arc(L * 0.72, -bh * 0.15, 3 * sc, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#fff";
+    ctx.beginPath();
+    ctx.arc(L * 0.72 + sc, -bh * 0.15 - sc, 1.2 * sc, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawStripedFish(cx, cy, sc, dir, bodyCol, stripeCol, accentCol, stripes) {
+    drawGenericFish(cx, cy, sc, dir, bodyCol, stripeCol, accentCol, true, 1.0);
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.scale(dir, 1);
+    const L = 34 * sc, bh = 14 * sc;
+    // Vertical stripes
+    ctx.strokeStyle = stripeCol;
+    ctx.lineWidth = 3 * sc;
+    ctx.globalAlpha = 0.55;
+    for (let i = 0; i < stripes; i++) {
+      const sx = L * 0.6 - i * (L * 0.28);
+      ctx.beginPath();
+      ctx.moveTo(sx, -bh * 0.8);
+      ctx.lineTo(sx, bh * 0.8);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+    ctx.restore();
+  }
+
+  function drawCatfish(cx, cy, sc, dir) {
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.scale(dir, 1);
+    const L = 36 * sc, bh = 13 * sc;
+    // flat body
+    ctx.fillStyle = "#5a4a3a";
+    ctx.beginPath();
+    ctx.ellipse(0, 2*sc, L, bh*0.8, 0, 0, Math.PI*2);
+    ctx.fill();
+    // flat head
+    ctx.fillStyle = "#4a3a2a";
+    ctx.fillRect(L*0.4, -bh*0.7, L*0.6, bh*1.4);
+    // belly
+    ctx.fillStyle = "#c8b090";
+    ctx.beginPath();
+    ctx.ellipse(0, bh*0.4, L*0.5, bh*0.45, 0, 0, Math.PI*2);
+    ctx.fill();
+    // whiskers
+    ctx.strokeStyle = "#3a2a1a";
+    ctx.lineWidth = 1.5 * sc;
+    [[L*0.95, -3*sc, L*1.3, -10*sc],[L*0.95, 0, L*1.35, 2*sc],[L*0.85, 4*sc, L*1.2, 10*sc]].forEach(([x1,y1,x2,y2])=>{
+      ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+    });
+    // tail
+    ctx.fillStyle = "#3a2a1a";
+    ctx.beginPath();
+    ctx.moveTo(-L, 0);
+    ctx.lineTo(-L-16*sc, -12*sc);
+    ctx.lineTo(-L-16*sc, 12*sc);
+    ctx.closePath(); ctx.fill();
+    // eye
+    ctx.fillStyle = "#111";
+    ctx.beginPath(); ctx.arc(L*0.8, -3*sc, 3*sc, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle="#fff"; ctx.beginPath(); ctx.arc(L*0.8+sc, -4*sc, 1.2*sc, 0, Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+
+  function drawRainbowTrout(cx, cy, sc, dir) {
+    drawGenericFish(cx, cy, sc, dir, "#8ecf70", "#4a8c30", "#d4f0a0", true, 1.1);
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.scale(dir, 1);
+    const L = 34*sc, bh = 14*sc;
+    // Pink lateral stripe
+    ctx.strokeStyle = "#e060a0";
+    ctx.lineWidth = 4*sc;
+    ctx.globalAlpha = 0.7;
+    ctx.beginPath();
+    ctx.moveTo(-L*0.4, 0);
+    ctx.bezierCurveTo(0, -2*sc, L*0.4, -2*sc, L*0.85, 0);
+    ctx.stroke();
+    // Spots
+    ctx.fillStyle = "#2a6010";
+    ctx.globalAlpha = 0.55;
+    [[-5*sc,-5*sc],[8*sc,-7*sc],[20*sc,-3*sc],[-15*sc,3*sc],[5*sc,5*sc]].forEach(([dx,dy])=>{
+      ctx.beginPath(); ctx.arc(dx, dy, 2.5*sc, 0, Math.PI*2); ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+    ctx.restore();
+  }
+
+  function drawClownfish(cx, cy, sc, dir) {
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.scale(dir, 1);
+    const L = 28*sc, bh = 13*sc;
+    // Orange body
+    ctx.fillStyle = "#f07020";
+    ctx.beginPath(); ctx.ellipse(0, 0, L, bh, 0, 0, Math.PI*2); ctx.fill();
+    // White bands
+    ctx.fillStyle = "#ffffff";
+    ctx.globalAlpha = 0.85;
+    [L*0.6, 0, -L*0.35].forEach(bx => {
+      ctx.beginPath(); ctx.ellipse(bx, 0, 5.5*sc, bh*0.95, 0, 0, Math.PI*2); ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+    // Black outlines on bands
+    ctx.strokeStyle = "#111"; ctx.lineWidth = 1.5*sc;
+    [L*0.6, 0, -L*0.35].forEach(bx => {
+      ctx.beginPath(); ctx.ellipse(bx, 0, 5.5*sc, bh*0.95, 0, 0, Math.PI*2); ctx.stroke();
+    });
+    // Tail
+    ctx.fillStyle = "#f07020";
+    ctx.beginPath();
+    ctx.moveTo(-L, 0); ctx.lineTo(-L-16*sc, -12*sc); ctx.lineTo(-L-16*sc, 12*sc);
+    ctx.closePath(); ctx.fill();
+    // Dorsal fin
+    ctx.fillStyle = "#c04800";
+    ctx.beginPath();
+    ctx.moveTo(-L*0.2, -bh); ctx.lineTo(L*0.2, -bh-9*sc); ctx.lineTo(L*0.55, -bh); ctx.closePath(); ctx.fill();
+    // Eye
+    ctx.fillStyle = "#111";
+    ctx.beginPath(); ctx.arc(L*0.72, -2*sc, 3.5*sc, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle="#fff"; ctx.beginPath(); ctx.arc(L*0.72+sc, -3*sc, 1.4*sc, 0, Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+
+  function drawPufferfish(cx, cy, sc, dir) {
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.scale(dir, 1);
+    const r = 20*sc;
+    // Round body
+    ctx.fillStyle = "#d4c840";
+    ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI*2); ctx.fill();
+    // Belly
+    ctx.fillStyle = "#fffccc";
+    ctx.beginPath(); ctx.ellipse(2*sc, 4*sc, r*0.65, r*0.55, 0, 0, Math.PI*2); ctx.fill();
+    // Spines
+    ctx.strokeStyle = "#8a7a10"; ctx.lineWidth = 1.5*sc;
+    const spineAngles = [-60,-30,0,30,60,-90,90,-120,120,150,-150,180];
+    spineAngles.forEach(a => {
+      const rad = a * Math.PI/180;
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(rad)*r, Math.sin(rad)*r);
+      ctx.lineTo(Math.cos(rad)*(r+8*sc), Math.sin(rad)*(r+8*sc));
+      ctx.stroke();
+    });
+    // Tail (small)
+    ctx.fillStyle = "#b0a030";
+    ctx.beginPath();
+    ctx.moveTo(-r, 0); ctx.lineTo(-r-12*sc, -8*sc); ctx.lineTo(-r-12*sc, 8*sc);
+    ctx.closePath(); ctx.fill();
+    // Eye
+    ctx.fillStyle="#111"; ctx.beginPath(); ctx.arc(r*0.55, -r*0.2, 4.5*sc, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle="#fff"; ctx.beginPath(); ctx.arc(r*0.55+1.2*sc, -r*0.2-1.2*sc, 1.8*sc, 0, Math.PI*2); ctx.fill();
+    // Mouth (pouty)
+    ctx.strokeStyle="#5a4a00"; ctx.lineWidth=1.5*sc;
+    ctx.beginPath(); ctx.arc(r*0.8, 4*sc, 4*sc, 0.3, Math.PI-0.3); ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawSwordfish(cx, cy, sc, dir) {
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.scale(dir, 1);
+    const L = 40*sc, bh = 11*sc;
+    // Body
+    ctx.fillStyle = "#5588aa";
+    ctx.beginPath(); ctx.ellipse(0, 0, L, bh, 0, 0, Math.PI*2); ctx.fill();
+    // Belly
+    ctx.fillStyle = "#ddeeff";
+    ctx.beginPath(); ctx.ellipse(4*sc, 3*sc, L*0.55, bh*0.5, 0, 0, Math.PI*2); ctx.fill();
+    // Bill (sword)
+    ctx.fillStyle = "#778899";
+    ctx.beginPath();
+    ctx.moveTo(L, -1.5*sc);
+    ctx.lineTo(L + 28*sc, 0);
+    ctx.lineTo(L, 2.5*sc);
+    ctx.closePath(); ctx.fill();
+    // Dorsal fin (tall)
+    ctx.fillStyle = "#336688";
+    ctx.beginPath();
+    ctx.moveTo(-L*0.1, -bh);
+    ctx.lineTo(L*0.15, -bh - 18*sc);
+    ctx.lineTo(L*0.5, -bh);
+    ctx.closePath(); ctx.fill();
+    // Tail (crescent)
+    ctx.fillStyle = "#336688";
+    ctx.beginPath();
+    ctx.moveTo(-L, 0);
+    ctx.lineTo(-L-20*sc, -15*sc);
+    ctx.lineTo(-L-6*sc, 0);
+    ctx.lineTo(-L-20*sc, 15*sc);
+    ctx.closePath(); ctx.fill();
+    // Lateral line
+    ctx.strokeStyle = "#7aaabb"; ctx.lineWidth=2*sc; ctx.globalAlpha=0.6;
+    ctx.beginPath(); ctx.moveTo(-L*0.5, 0); ctx.lineTo(L*0.7, 0); ctx.stroke();
+    ctx.globalAlpha=1;
+    // Eye
+    ctx.fillStyle="#111"; ctx.beginPath(); ctx.arc(L*0.78, -bh*0.1, 3.5*sc, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle="#fff"; ctx.beginPath(); ctx.arc(L*0.78+sc, -bh*0.1-sc, 1.4*sc, 0, Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+
+  function drawShark(cx, cy, sc, dir) {
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.scale(dir, 1);
+    const L = 48*sc, bh = 14*sc;
+    // Body
+    ctx.fillStyle = "#7a8c9a";
+    ctx.beginPath(); ctx.ellipse(0, 2*sc, L, bh, 0, 0, Math.PI*2); ctx.fill();
+    // White belly
+    ctx.fillStyle = "#e8f0f5";
+    ctx.beginPath(); ctx.ellipse(4*sc, 6*sc, L*0.65, bh*0.5, 0, 0, Math.PI*2); ctx.fill();
+    // Dorsal fin
+    ctx.fillStyle = "#5a6870";
+    ctx.beginPath();
+    ctx.moveTo(L*0.1, -bh+2*sc);
+    ctx.lineTo(L*0.3, -bh - 22*sc);
+    ctx.lineTo(L*0.55, -bh+2*sc);
+    ctx.closePath(); ctx.fill();
+    // Pectoral fins
+    ctx.fillStyle = "#6a7880";
+    ctx.beginPath(); ctx.ellipse(-L*0.1, bh*0.6, 18*sc, 7*sc, 0.5, 0, Math.PI*2); ctx.fill();
+    // Tail (crescent)
+    ctx.fillStyle = "#5a6870";
+    ctx.beginPath();
+    ctx.moveTo(-L, 0);
+    ctx.lineTo(-L-22*sc, -18*sc);
+    ctx.lineTo(-L-8*sc, -2*sc);
+    ctx.lineTo(-L-8*sc, 2*sc);
+    ctx.lineTo(-L-22*sc, 18*sc);
+    ctx.closePath(); ctx.fill();
+    // Snout
+    ctx.fillStyle = "#7a8c9a";
+    ctx.beginPath(); ctx.ellipse(L*0.95, 2*sc, 12*sc, 8*sc, 0, 0, Math.PI*2); ctx.fill();
+    // Teeth
+    ctx.fillStyle = "#fff";
+    for(let i=0;i<5;i++){
+      ctx.beginPath();
+      ctx.moveTo(L*0.8+i*5*sc, 5*sc);
+      ctx.lineTo(L*0.83+i*5*sc, 10*sc);
+      ctx.lineTo(L*0.86+i*5*sc, 5*sc);
+      ctx.closePath(); ctx.fill();
+    }
+    // Eye (black, menacing)
+    ctx.fillStyle="#080808"; ctx.beginPath(); ctx.arc(L*0.78, -2*sc, 4.5*sc, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle="rgba(255,255,255,0.15)"; ctx.beginPath(); ctx.arc(L*0.78+1.2*sc, -3.5*sc, 1.8*sc, 0, Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+
+  function drawAnglerfish(cx, cy, sc, dir) {
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.scale(dir, 1);
+    const r = 22*sc;
+    // Dark body
+    ctx.fillStyle = "#1a0a20";
+    ctx.beginPath(); ctx.ellipse(0, 0, r*1.1, r, 0, 0, Math.PI*2); ctx.fill();
+    // Bioluminescence pattern
+    ctx.fillStyle = "#5500aa";
+    ctx.globalAlpha = 0.4;
+    ctx.beginPath(); ctx.ellipse(-4*sc, -5*sc, r*0.6, r*0.4, 0, 0, Math.PI*2); ctx.fill();
+    ctx.globalAlpha = 1;
+    // Big mouth
+    ctx.fillStyle = "#0d0510";
+    ctx.beginPath();
+    ctx.moveTo(-r*0.4, -r*0.2);
+    ctx.lineTo(r*0.9, -r*0.3);
+    ctx.lineTo(r*0.9, r*0.5);
+    ctx.lineTo(-r*0.4, r*0.3);
+    ctx.closePath(); ctx.fill();
+    // Fangs
+    ctx.fillStyle = "#ccccff";
+    [[r*0.2, -r*0.2],[r*0.5, -r*0.26],[r*0.72, -r*0.24],
+     [r*0.2, r*0.28],[r*0.5, r*0.36],[r*0.72, r*0.3]].forEach(([fx,fy],i)=>{
+      ctx.beginPath();
+      ctx.moveTo(fx, fy);
+      ctx.lineTo(fx + (i<3 ? 4 : -4)*sc, i<3 ? fy+10*sc : fy-10*sc);
+      ctx.lineTo(fx + (i<3 ? 8 : -8)*sc, fy);
+      ctx.closePath(); ctx.fill();
+    });
+    // Lure (bioluminescent)
+    ctx.strokeStyle = "#6622cc"; ctx.lineWidth=2*sc;
+    ctx.beginPath(); ctx.moveTo(0, -r); ctx.bezierCurveTo(-5*sc, -r-15*sc, 12*sc, -r-20*sc, 14*sc, -r-26*sc); ctx.stroke();
+    ctx.fillStyle = "#ccff00"; ctx.shadowColor="#ccff00"; ctx.shadowBlur=18;
+    ctx.beginPath(); ctx.arc(14*sc, -r-26*sc, 5*sc, 0, Math.PI*2); ctx.fill();
+    ctx.shadowBlur=0;
+    // Tail
+    ctx.fillStyle="#110818";
+    ctx.beginPath();
+    ctx.moveTo(-r*1.1, 0); ctx.lineTo(-r*1.1-16*sc, -12*sc); ctx.lineTo(-r*1.1-16*sc, 12*sc);
+    ctx.closePath(); ctx.fill();
+    // Spines on back
+    ctx.strokeStyle="#330066"; ctx.lineWidth=1.5*sc;
+    [-40,-20,0,20,40].forEach(a=>{
+      const rad=(a-90)*Math.PI/180;
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(rad)*r*0.8, Math.sin(rad)*r*0.9-3*sc);
+      ctx.lineTo(Math.cos(rad)*(r*0.8+8*sc), Math.sin(rad)*(r*0.9+8*sc)-3*sc);
+      ctx.stroke();
+    });
+    // Eye (glowing)
+    ctx.fillStyle="#ffaa00"; ctx.shadowColor="#ffaa00"; ctx.shadowBlur=10;
+    ctx.beginPath(); ctx.arc(-r*0.05, -r*0.15, 5.5*sc, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle="#111"; ctx.shadowBlur=0;
+    ctx.beginPath(); ctx.arc(-r*0.05, -r*0.15, 2.5*sc, 0, Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+
+  function drawOarfish(cx, cy, sc, dir) {
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.scale(dir, 1);
+    // Long serpentine body
+    ctx.fillStyle = "#c0d8e8";
+    ctx.strokeStyle = "#8aaabb";
+    ctx.lineWidth = 10*sc;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(50*sc, 0);
+    ctx.bezierCurveTo(20*sc, -12*sc, -20*sc, 12*sc, -50*sc, 0);
+    ctx.stroke();
+    // Red dorsal fin (crest)
+    ctx.strokeStyle = "#ee3333";
+    ctx.lineWidth = 3*sc;
+    ctx.beginPath();
+    ctx.moveTo(50*sc, -5*sc);
+    ctx.bezierCurveTo(20*sc, -18*sc, -20*sc, -14*sc, -50*sc, -5*sc);
+    ctx.stroke();
+    // Silver sheen
+    ctx.strokeStyle = "rgba(255,255,255,0.55)";
+    ctx.lineWidth = 3*sc;
+    ctx.beginPath();
+    ctx.moveTo(45*sc, -1*sc);
+    ctx.bezierCurveTo(15*sc, -8*sc, -15*sc, 8*sc, -45*sc, 1*sc);
+    ctx.stroke();
+    // Head
+    ctx.fillStyle = "#c0d8e8";
+    ctx.beginPath(); ctx.ellipse(50*sc, 0, 10*sc, 7*sc, 0, 0, Math.PI*2); ctx.fill();
+    // Eye
+    ctx.fillStyle="#111"; ctx.beginPath(); ctx.arc(56*sc, -1*sc, 2.8*sc, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle="#fff"; ctx.beginPath(); ctx.arc(57*sc, -2*sc, 1.2*sc, 0, Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+
+  function drawKoi(cx, cy, sc, dir) {
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.scale(dir, 1);
+    const L = 32*sc, bh = 13*sc;
+    // Gold body
+    ctx.fillStyle = "#f6b800";
+    ctx.beginPath(); ctx.ellipse(0, 0, L, bh, 0, 0, Math.PI*2); ctx.fill();
+    // Orange/white patches
+    ctx.fillStyle = "#ff6600";
+    ctx.globalAlpha = 0.7;
+    ctx.beginPath(); ctx.ellipse(-L*0.1, -bh*0.3, L*0.35, bh*0.55, 0.3, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = "#fff";
+    ctx.beginPath(); ctx.ellipse(L*0.25, bh*0.3, L*0.28, bh*0.45, -0.2, 0, Math.PI*2); ctx.fill();
+    ctx.globalAlpha = 1;
+    // Flowing tail (split)
+    ctx.fillStyle = "#e8aa00";
+    ctx.beginPath();
+    ctx.moveTo(-L, 0);
+    ctx.lineTo(-L-22*sc, -16*sc);
+    ctx.lineTo(-L-10*sc, -2*sc);
+    ctx.lineTo(-L-10*sc, 2*sc);
+    ctx.lineTo(-L-22*sc, 16*sc);
+    ctx.closePath(); ctx.fill();
+    // Dorsal
+    ctx.fillStyle = "#cc8800";
+    ctx.beginPath();
+    ctx.moveTo(-L*0.2, -bh); ctx.lineTo(L*0.15, -bh-12*sc); ctx.lineTo(L*0.5, -bh); ctx.closePath(); ctx.fill();
+    // Whiskers (koi have barbels)
+    ctx.strokeStyle="#c08000"; ctx.lineWidth=1.2*sc;
+    [[L*0.88, 2*sc, L*1.15, 8*sc],[L*0.88, -2*sc, L*1.12, -8*sc]].forEach(([x1,y1,x2,y2])=>{
+      ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+    });
+    // Golden glow
+    ctx.shadowColor="#f6c90e"; ctx.shadowBlur=18;
+    ctx.strokeStyle="#ffe060"; ctx.lineWidth=1.5*sc;
+    ctx.beginPath(); ctx.ellipse(0, 0, L, bh, 0, 0, Math.PI*2); ctx.stroke();
+    ctx.shadowBlur=0;
+    // Eye
+    ctx.fillStyle="#111"; ctx.beginPath(); ctx.arc(L*0.75, -bh*0.1, 3.5*sc, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle="#f6c90e"; ctx.beginPath(); ctx.arc(L*0.75, -bh*0.1, 1.5*sc, 0, Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+
+  // ─── Game state ───────────────────────────────────────────────────────────
+  let gold = 0, totalCaught = 0;
+  let ownedRods = new Set(["wooden"]);
+  let currentRodId = "wooden";
+  let phase = "idle"; // idle | charging | cast | waiting | biting | reeling | caught | failed
+  let chargeT = 0, castDist = 0, waitTimer = 0, biteTimer = 0, reelProgress = 0;
+  let hookedFish = null, hookedWeight = 0;
+  let bobberX = 0, bobberY = 0, bobberVY = 0, bobberLanded = false;
+  let rippleR = 0, rippleAlpha = 0;
+  let catchDisplay = null, catchDisplayTimer = 0;
+  let bubbles = [], fishList = [], fishLog = [];
+  let animT = 0;
+  let splashParticles = [];
+
+  // Load/save
+  function loadSave() {
+    try {
+      const s = JSON.parse(localStorage.getItem("fishing_save") || "{}");
+      gold = s.gold || 0;
+      totalCaught = s.caught || 0;
+      ownedRods = new Set(s.ownedRods || ["wooden"]);
+      currentRodId = s.rod || "wooden";
+      if (!ownedRods.has(currentRodId)) currentRodId = "wooden";
+      (s.log || []).forEach(e => fishLog.push(e));
+    } catch(_) {}
+  }
+  function save() {
+    localStorage.setItem("fishing_save", JSON.stringify({
+      gold, caught: totalCaught, ownedRods: [...ownedRods], rod: currentRodId,
+      log: fishLog.slice(-50)
+    }));
+  }
+
+  function currentRod() { return RODS.find(r => r.id === currentRodId) || RODS[0]; }
+
+  // ─── Rod UI ───────────────────────────────────────────────────────────────
+  function buildRodUI() {
+    const sel = document.getElementById("rod-selector");
+    sel.innerHTML = "";
+    RODS.forEach(rod => {
+      const btn = document.createElement("button");
+      btn.className = "rod-btn" + (ownedRods.has(rod.id) ? " owned" : "") + (rod.id === currentRodId ? " active" : "");
+      const costLabel = ownedRods.has(rod.id) ? "Owned" : `${rod.cost}g`;
+      btn.innerHTML = `<span>${rod.name}</span><br><span class="rod-cost">${costLabel}</span>`;
+      btn.title = `Cast: ${Math.round(rod.castPower*100)}%  Reel: ${rod.reelSpeed.toFixed(1)}×  Rare: +${Math.round(rod.rareBonus*100)}%`;
+      btn.addEventListener("click", () => {
+        if (ownedRods.has(rod.id)) {
+          currentRodId = rod.id;
+          save();
+          buildRodUI();
+          updateHUD();
+        } else if (gold >= rod.cost) {
+          gold -= rod.cost;
+          ownedRods.add(rod.id);
+          currentRodId = rod.id;
+          save();
+          buildRodUI();
+          updateHUD();
+        }
+      });
+      sel.appendChild(btn);
+    });
+  }
+
+  function updateHUD() {
+    document.getElementById("gold-display").textContent = gold;
+    document.getElementById("caught-display").textContent = totalCaught;
+    document.getElementById("rod-display").textContent = currentRod().name;
+  }
+
+  function addToLog(fish, weight, value) {
+    const entry = { fish: fish.name, rarity: fish.rarity, weight: weight.toFixed(2), value };
+    fishLog.unshift(entry);
+    const log = document.getElementById("fish-log");
+    const div = document.createElement("div");
+    div.className = `entry ${fish.rarity}`;
+    div.textContent = `[${fish.rarity.toUpperCase()}] ${fish.name} — ${weight.toFixed(2)} kg — +${value} gold`;
+    if (log.firstChild && log.firstChild.tagName === "EM") log.innerHTML = "";
+    log.insertBefore(div, log.firstChild);
+    while (log.children.length > 30) log.removeChild(log.lastChild);
+  }
+
+  // ─── Fish pool & selection ─────────────────────────────────────────────────
+  const RARITY_WEIGHTS = {
+    common:    { base: 0.55 },
+    uncommon:  { base: 0.28 },
+    rare:      { base: 0.12 },
+    epic:      { base: 0.04 },
+    legendary: { base: 0.01 },
+  };
+
+  function pickFish(rod) {
+    const bonus = rod.rareBonus;
+    const pool = [];
+    FISH.forEach(f => {
+      const rw = RARITY_WEIGHTS[f.rarity];
+      let w = rw.base;
+      if (f.rarity !== "common") w += bonus * (f.rarity === "legendary" ? 3 : f.rarity === "epic" ? 2 : 1);
+      pool.push({ fish: f, w });
+    });
+    const total = pool.reduce((s, p) => s + p.w, 0);
+    let r = Math.random() * total;
+    for (const p of pool) { r -= p.w; if (r <= 0) return p.fish; }
+    return pool[0].fish;
+  }
+
+  // ─── Scenic fish swimming ─────────────────────────────────────────────────
+  function spawnSceneryFish() {
+    const f = FISH[Math.floor(Math.random() * Math.min(FISH.length, 8))];
+    fishList.push({
+      fish: f, x: Math.random() > 0.5 ? -80 : W+80,
+      y: WATER_TOP + 30 + Math.random() * (H - WATER_TOP - 80),
+      vx: (Math.random() > 0.5 ? 1 : -1) * (0.5 + Math.random() * 1.2),
+      anim: Math.random() * Math.PI * 2, sc: 0.6 + Math.random() * 0.6,
+    });
+  }
+
+  function tickSceneryFish() {
+    fishList.forEach(f => {
+      f.x += f.vx;
+      f.anim += 0.04;
+      f.y += Math.sin(f.anim) * 0.3;
+    });
+    fishList = fishList.filter(f => f.x > -120 && f.x < W + 120);
+    if (fishList.length < 4 && Math.random() < 0.012) spawnSceneryFish();
+  }
+
+  // ─── Input ────────────────────────────────────────────────────────────────
+  function handleAction() {
+    const rod = currentRod();
+    if (phase === "idle") {
+      phase = "charging";
+      chargeT = 0;
+    } else if (phase === "charging") {
+      // launch
+      const power = Math.min(chargeT / 80, 1) * rod.castPower;
+      castDist = 140 + power * 320;
+      const angle = -0.55 - power * 0.35;
+      bobberX = ANGLER_X + 30;
+      bobberY = ANGLER_Y - 20;
+      bobberVY = Math.sin(angle) * 22;
+      bobberLanded = false;
+      rippleAlpha = 0;
+      phase = "cast";
+      splashParticles = [];
+    } else if (phase === "biting") {
+      // reel!
+      phase = "reeling";
+      reelProgress = 0;
+    } else if (phase === "waiting") {
+      // too early — missed
+      phase = "failed";
+      waitTimer = 60;
+    }
+  }
+
+  canvas.addEventListener("click", handleAction);
+  document.addEventListener("keydown", e => {
+    if (e.code === "Space") { e.preventDefault(); handleAction(); }
+  });
+
+  // ─── Scene constants ──────────────────────────────────────────────────────
+  const WATER_TOP = 220;
+  const ANGLER_X = 100;
+  const ANGLER_Y = WATER_TOP - 15;
+  const SHORE_X  = 60;
+
+  // ─── Update ───────────────────────────────────────────────────────────────
+  function update() {
+    animT += 0.016;
+    tickSceneryFish();
+
+    // Bubbles
+    if (Math.random() < 0.04) {
+      bubbles.push({ x: SHORE_X + 60 + Math.random() * (W - SHORE_X - 80), y: H - 10, r: 2 + Math.random()*3, vy: 0.4 + Math.random()*0.6, life: 1 });
+    }
+    bubbles.forEach(b => { b.y -= b.vy; b.life -= 0.005; });
+    bubbles = bubbles.filter(b => b.life > 0 && b.y > WATER_TOP);
+
+    // Splash particles
+    splashParticles.forEach(p => { p.x += p.vx; p.y += p.vy; p.vy += 0.3; p.life--; });
+    splashParticles = splashParticles.filter(p => p.life > 0);
+
+    if (catchDisplayTimer > 0) catchDisplayTimer--;
+
+    const rod = currentRod();
+
+    if (phase === "charging") {
+      chargeT = Math.min(chargeT + 1, 80);
+    }
+
+    if (phase === "cast") {
+      bobberX += 8 * rod.castPower;
+      bobberY += bobberVY;
+      bobberVY += 0.8;
+
+      const targetX = ANGLER_X + castDist;
+      const targetY = WATER_TOP + 12;
+
+      if (bobberY >= WATER_TOP && !bobberLanded) {
+        bobberY = WATER_TOP + 12;
+        bobberLanded = true;
+        bobberX = Math.min(bobberX, W - 40);
+        rippleR = 0; rippleAlpha = 1;
+        // Splash
+        for (let i = 0; i < 12; i++) {
+          const a = Math.random() * Math.PI * 2;
+          splashParticles.push({ x: bobberX, y: WATER_TOP, vx: Math.cos(a)*2.5, vy: Math.sin(a)*2.5-3, life: 20 });
+        }
+        // Wait for bite
+        const waitBase = 90 + Math.random() * 180;
+        waitTimer = waitBase / (0.6 + rod.reelSpeed * 0.3);
+        hookedFish = pickFish(rod);
+        hookedWeight = hookedFish.weight[0] + Math.random() * (hookedFish.weight[1] - hookedFish.weight[0]);
+        phase = "waiting";
+      }
+    }
+
+    if (phase === "waiting") {
+      rippleR += 0.3; if (rippleAlpha > 0) rippleAlpha -= 0.005;
+      waitTimer--;
+      if (waitTimer <= 0) { phase = "biting"; biteTimer = 50 + Math.random() * 30; }
+    }
+
+    if (phase === "biting") {
+      biteTimer--;
+      if (biteTimer <= 0) { phase = "idle"; } // fish escaped
+    }
+
+    if (phase === "reeling") {
+      reelProgress += rod.reelSpeed * 1.2 / hookedWeight;
+      if (reelProgress >= 100) {
+        // Caught!
+        const value = Math.round(hookedFish.value * (0.7 + Math.random() * 0.6) * (1 + hookedWeight / hookedFish.weight[1]));
+        gold += value; totalCaught++;
+        catchDisplay = { fish: hookedFish, weight: hookedWeight, value };
+        catchDisplayTimer = 200;
+        addToLog(hookedFish, hookedWeight, value);
+        save(); buildRodUI(); updateHUD();
+        phase = "idle";
+        // Big splash
+        for (let i=0;i<20;i++){
+          const a=Math.random()*Math.PI*2;
+          splashParticles.push({x:bobberX,y:WATER_TOP,vx:Math.cos(a)*4,vy:Math.sin(a)*4-5,life:30});
+        }
+      }
+    }
+
+    if (phase === "failed") {
+      waitTimer--;
+      if (waitTimer <= 0) phase = "idle";
+    }
+  }
+
+  // ─── Draw ─────────────────────────────────────────────────────────────────
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    drawSky();
+    drawWater();
+    drawSceneryFish();
+    drawBubbles();
+    drawSplash();
+    drawRipple();
+    drawBobber();
+    drawLine();
+    drawAngler();
+    drawRodGraphic();
+    drawPhaseUI();
+    if (catchDisplayTimer > 0) drawCatchPanel();
+  }
+
+  function drawSky() {
+    const sg = ctx.createLinearGradient(0, 0, 0, WATER_TOP);
+    sg.addColorStop(0, "#0a1a38");
+    sg.addColorStop(0.6, "#1a3a70");
+    sg.addColorStop(1, "#2255a0");
+    ctx.fillStyle = sg; ctx.fillRect(0, 0, W, WATER_TOP);
+
+    // Sun/moon
+    ctx.fillStyle = "#ffe090"; ctx.shadowColor = "#ffe090"; ctx.shadowBlur = 30;
+    ctx.beginPath(); ctx.arc(W - 100, 60, 28, 0, Math.PI*2); ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // Clouds
+    ctx.fillStyle = "rgba(255,255,255,0.12)";
+    [[130,50,60,20],[300,35,80,22],[520,55,70,18],[680,40,90,24]].forEach(([cx2,cy2,rw,rh])=>{
+      ctx.beginPath(); ctx.ellipse(cx2, cy2, rw, rh, 0, 0, Math.PI*2); ctx.fill();
+    });
+
+    // Horizon glow
+    const hg = ctx.createLinearGradient(0, WATER_TOP - 30, 0, WATER_TOP);
+    hg.addColorStop(0, "rgba(255,160,60,0)");
+    hg.addColorStop(1, "rgba(255,160,60,0.18)");
+    ctx.fillStyle = hg; ctx.fillRect(0, WATER_TOP-30, W, 30);
+
+    // Shore / dock
+    ctx.fillStyle = "#5a3a1a";
+    ctx.fillRect(0, WATER_TOP - 10, SHORE_X + 20, H - WATER_TOP + 10);
+    ctx.fillStyle = "#7a5a2a";
+    ctx.fillRect(0, WATER_TOP - 14, SHORE_X + 24, 8);
+    // Dock planks
+    ctx.strokeStyle = "#6a4a1a"; ctx.lineWidth = 1;
+    for (let py = WATER_TOP+10; py < H; py+=16) {
+      ctx.beginPath(); ctx.moveTo(0, py); ctx.lineTo(SHORE_X+24, py); ctx.stroke();
+    }
+  }
+
+  function drawWater() {
+    // Main water
+    const wg = ctx.createLinearGradient(0, WATER_TOP, 0, H);
+    wg.addColorStop(0, "#1a4080");
+    wg.addColorStop(0.3, "#0e2a55");
+    wg.addColorStop(1, "#060e20");
+    ctx.fillStyle = wg;
+    ctx.fillRect(SHORE_X, WATER_TOP, W - SHORE_X, H - WATER_TOP);
+
+    // Surface shimmer
+    ctx.globalAlpha = 0.18;
+    ctx.fillStyle = "#88bbff";
+    for (let i = 0; i < 6; i++) {
+      const wx = SHORE_X + 30 + ((animT * 28 + i * 130) % (W - SHORE_X - 30));
+      ctx.beginPath(); ctx.ellipse(wx, WATER_TOP + 4, 30 + i*8, 3, 0, 0, Math.PI*2); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+
+    // Surface line
+    ctx.strokeStyle = "#4488cc"; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(SHORE_X, WATER_TOP); ctx.lineTo(W, WATER_TOP); ctx.stroke();
+  }
+
+  function drawSceneryFish() {
+    fishList.forEach(f => {
+      ctx.save();
+      ctx.globalAlpha = 0.55;
+      f.fish.draw(f.x, f.y + Math.sin(f.anim)*4, f.sc * 0.75, f.vx > 0 ? 1 : -1);
+      ctx.globalAlpha = 1;
+      ctx.restore();
+    });
+  }
+
+  function drawBubbles() {
+    ctx.fillStyle = "rgba(100,180,255,0.4)";
+    bubbles.forEach(b => {
+      ctx.globalAlpha = b.life * 0.5;
+      ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI*2); ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+  }
+
+  function drawSplash() {
+    ctx.fillStyle = "rgba(100,180,255,0.7)";
+    splashParticles.forEach(p => {
+      ctx.globalAlpha = p.life / 30;
+      ctx.beginPath(); ctx.arc(p.x, p.y, 2.5, 0, Math.PI*2); ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+  }
+
+  function drawRipple() {
+    if (rippleAlpha > 0) {
+      ctx.strokeStyle = `rgba(100,180,255,${rippleAlpha})`;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(bobberX, WATER_TOP, rippleR, 0, Math.PI*2); ctx.stroke();
+    }
+  }
+
+  function drawBobber() {
+    if (phase === "cast" && !bobberLanded) {
+      // In-flight
+      ctx.fillStyle = "#ff4444";
+      ctx.beginPath(); ctx.arc(bobberX, bobberY, 6, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = "#fff";
+      ctx.beginPath(); ctx.arc(bobberX, bobberY - 3, 2, 0, Math.PI*2); ctx.fill();
+    } else if (["waiting","biting","reeling"].includes(phase)) {
+      const bob = phase === "biting" ? Math.sin(animT * 18) * 6 : Math.sin(animT * 3) * 2;
+      // Under-water portion
+      ctx.fillStyle = "#cc2222";
+      ctx.beginPath(); ctx.arc(bobberX, WATER_TOP + 6 + bob, 6, 0, Math.PI*2); ctx.fill();
+      // Above-water portion
+      ctx.fillStyle = "#ff4444";
+      ctx.beginPath(); ctx.arc(bobberX, WATER_TOP - 2 + bob, 5, Math.PI, 0); ctx.fill();
+      ctx.fillStyle = "#fff";
+      ctx.beginPath(); ctx.arc(bobberX, WATER_TOP - 2 + bob - 2, 2, 0, Math.PI*2); ctx.fill();
+    }
+  }
+
+  function drawLine() {
+    if (!["cast","waiting","biting","reeling"].includes(phase)) return;
+    const rod = currentRod();
+    const tipX = ANGLER_X + 46;
+    const tipY = ANGLER_Y - 55;
+    const bx2 = (phase === "cast" && !bobberLanded) ? bobberX : bobberX;
+    const by2 = (phase === "cast" && !bobberLanded) ? bobberY : WATER_TOP + 4 + Math.sin(animT*3)*2;
+    ctx.strokeStyle = rod.color + "cc";
+    ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.moveTo(tipX, tipY); ctx.lineTo(bx2, by2); ctx.stroke();
+  }
+
+  function drawAngler() {
+    const x = ANGLER_X, y = ANGLER_Y;
+    // Shadow
+    ctx.fillStyle = "rgba(0,0,0,0.25)";
+    ctx.beginPath(); ctx.ellipse(x + 10, y + 2, 22, 5, 0, 0, Math.PI*2); ctx.fill();
+    // Legs
+    ctx.fillStyle = "#3a2a1a";
+    ctx.fillRect(x, y - 20, 7, 22);
+    ctx.fillRect(x + 14, y - 20, 7, 22);
+    // Body
+    ctx.fillStyle = "#4466aa";
+    ctx.beginPath(); ctx.roundRect(x - 4, y - 40, 30, 22, 4); ctx.fill();
+    // Head
+    ctx.fillStyle = "#f0c88a";
+    ctx.beginPath(); ctx.arc(x + 11, y - 46, 11, 0, Math.PI*2); ctx.fill();
+    // Hat
+    ctx.fillStyle = "#2a4a1a";
+    ctx.fillRect(x + 1, y - 60, 22, 6);
+    ctx.fillRect(x + 5, y - 72, 14, 14);
+    // Arm holding rod
+    ctx.fillStyle = "#3a5590";
+    ctx.beginPath();
+    ctx.moveTo(x + 20, y - 36);
+    ctx.lineTo(x + 44, y - 56);
+    ctx.lineWidth = 7; ctx.strokeStyle = "#3a5590"; ctx.stroke();
+  }
+
+  function drawRodGraphic() {
+    const rod = currentRod();
+    const baseX = ANGLER_X + 22, baseY = ANGLER_Y - 34;
+    const tipX = ANGLER_X + 46, tipY = ANGLER_Y - 55;
+
+    // Rod body
+    ctx.save();
+    const grad = ctx.createLinearGradient(baseX, baseY, tipX, tipY);
+    grad.addColorStop(0, rod.color);
+    grad.addColorStop(1, rod.tipColor);
+    ctx.strokeStyle = grad;
+    ctx.lineWidth = 4.5;
+    ctx.lineCap = "round";
+    ctx.beginPath(); ctx.moveTo(baseX, baseY); ctx.lineTo(tipX, tipY); ctx.stroke();
+
+    // Reel
+    ctx.fillStyle = "#888";
+    ctx.beginPath(); ctx.arc(baseX + 8, baseY - 4, 5, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = "#bbb";
+    ctx.beginPath(); ctx.arc(baseX + 8, baseY - 4, 3, 0, Math.PI*2); ctx.fill();
+
+    // Tip ring
+    ctx.strokeStyle = rod.tipColor; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(tipX, tipY, 3, 0, Math.PI*2); ctx.stroke();
+
+    ctx.restore();
+  }
+
+  function drawPhaseUI() {
+    ctx.font = "bold 14px Inter, sans-serif";
+    ctx.textAlign = "center";
+
+    if (phase === "idle") {
+      ctx.fillStyle = "#3699ff"; ctx.shadowColor = "#3699ff"; ctx.shadowBlur = 12;
+      ctx.fillText("Click or press Space to cast!", W/2, WATER_TOP - 30);
+      ctx.shadowBlur = 0;
+    }
+
+    if (phase === "charging") {
+      const power = Math.min(chargeT / 80, 1);
+      // Charge bar
+      const bw = 200, bh = 14, bx = W/2 - bw/2, by2 = WATER_TOP - 50;
+      ctx.fillStyle = "#ffffff22"; ctx.fillRect(bx, by2, bw, bh);
+      const col = power < 0.5 ? "#50d890" : power < 0.8 ? "#f6c90e" : "#f64e60";
+      ctx.fillStyle = col; ctx.shadowColor = col; ctx.shadowBlur = 10;
+      ctx.fillRect(bx, by2, bw * power, bh);
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = "#fff"; ctx.font = "11px Inter, sans-serif";
+      ctx.fillText(`Release to cast — Power: ${Math.round(power*100)}%`, W/2, by2 - 5);
+    }
+
+    if (phase === "waiting") {
+      ctx.fillStyle = "#a1a5b7";
+      ctx.fillText("Waiting for a bite…", W/2, WATER_TOP - 30);
+    }
+
+    if (phase === "biting") {
+      ctx.fillStyle = "#f6c90e"; ctx.shadowColor = "#f6c90e"; ctx.shadowBlur = 16;
+      ctx.font = "bold 20px Inter, sans-serif";
+      ctx.fillText("🐟 BITE! Click to reel in!", W/2, WATER_TOP - 38);
+      ctx.shadowBlur = 0;
+    }
+
+    if (phase === "reeling") {
+      const bw = 260, bh = 18, bx = W/2 - bw/2, by2 = WATER_TOP - 55;
+      ctx.fillStyle = "#ffffff22"; ctx.fillRect(bx, by2, bw, bh);
+      ctx.fillStyle = "#3699ff"; ctx.shadowColor = "#3699ff"; ctx.shadowBlur = 10;
+      ctx.fillRect(bx, by2, bw * (reelProgress/100), bh);
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = "#fff"; ctx.font = "11px Inter, sans-serif";
+      ctx.fillText(`Reeling in ${hookedFish.name}… (${hookedWeight.toFixed(1)} kg)`, W/2, by2-5);
+      // Show fish below hook
+      if (hookedFish && bobberLanded) {
+        const pct = reelProgress/100;
+        const fx = bobberX;
+        const fy = WATER_TOP + 30 + (1-pct)*80;
+        ctx.save();
+        ctx.globalAlpha = 0.75 + pct * 0.25;
+        hookedFish.draw(fx, fy, 0.9, -1);
+        ctx.globalAlpha = 1;
+        ctx.restore();
+      }
+    }
+
+    if (phase === "failed") {
+      ctx.fillStyle = "#f64e60"; ctx.shadowColor = "#f64e60"; ctx.shadowBlur = 14;
+      ctx.font = "bold 16px Inter, sans-serif";
+      ctx.fillText("You pulled too early! The fish escaped.", W/2, WATER_TOP - 35);
+      ctx.shadowBlur = 0;
+    }
+
+    ctx.textAlign = "left";
+
+    // Reel progress bar when reeling (bottom)
+    if (phase === "reeling") {
+      const bx = W - 180, by2 = H - 28, bw = 160, bh = 10;
+      ctx.fillStyle = "#ffffff18"; ctx.fillRect(bx, by2, bw, bh);
+      ctx.fillStyle = "#3699ff"; ctx.fillRect(bx, by2, bw*(reelProgress/100), bh);
+      ctx.fillStyle = "#7e8299"; ctx.font = "9px Inter, sans-serif";
+      ctx.fillText("REELING", bx, by2-3);
+    }
+  }
+
+  function drawCatchPanel() {
+    if (!catchDisplay) return;
+    const { fish, weight, value } = catchDisplay;
+    const alpha = Math.min(1, catchDisplayTimer / 30);
+    const pct = 1 - catchDisplayTimer/200;
+    const pw = 280, ph = 180, px = W/2 - pw/2, py = 30 + pct*10;
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+
+    // Panel background
+    ctx.fillStyle = "rgba(8, 16, 32, 0.92)";
+    ctx.strokeStyle = RARITY_COLOR[fish.rarity]; ctx.lineWidth = 2;
+    ctx.shadowColor = RARITY_COLOR[fish.rarity]; ctx.shadowBlur = 24;
+    ctx.beginPath(); ctx.roundRect(px, py, pw, ph, 10); ctx.fill(); ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // Fish drawing (centered)
+    ctx.save();
+    fish.draw(px + pw/2, py + 80, 1.4, 1);
+    ctx.restore();
+
+    // Text
+    ctx.textAlign = "center";
+    ctx.fillStyle = RARITY_COLOR[fish.rarity];
+    ctx.font = "bold 11px Inter, sans-serif";
+    ctx.fillText(fish.rarity.toUpperCase(), px+pw/2, py+24);
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold 18px Inter, sans-serif";
+    ctx.fillText(fish.name, px+pw/2, py+44);
+    ctx.fillStyle = "#a1a5b7";
+    ctx.font = "13px Inter, sans-serif";
+    ctx.fillText(`${weight.toFixed(2)} kg`, px+pw/2, py+145);
+    ctx.fillStyle = "#f6c90e";
+    ctx.font = "bold 15px Inter, sans-serif";
+    ctx.fillText(`+${value} gold`, px+pw/2, py+165);
+    ctx.textAlign = "left";
+
+    ctx.restore();
+  }
+
+  // ─── Loop ─────────────────────────────────────────────────────────────────
+  function loop() {
+    requestAnimationFrame(loop);
+    update();
+    draw();
+  }
+
+  loadSave();
+  buildRodUI();
+  updateHUD();
+  // Seed some scenery fish
+  for (let i=0; i<4; i++) spawnSceneryFish();
+  loop();
+
+})();
+</script>
+{% endblock %}

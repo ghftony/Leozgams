@@ -4,21 +4,93 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>{% block title %}Parkour Game{% endblock %}</title>
+  <title>{% block title %}Games{% endblock %}</title>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,400,500,600,700" />
   <link href="{% static 'assets/plugins/global/plugins.bundle.css' %}" rel="stylesheet" />
   <link href="{% static 'assets/css/style.bundle.css' %}" rel="stylesheet" />
+  <style>
+    /* ── App grid menu ───────────────────────────────────────── */
+    #apps-toggle {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 6px 8px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s;
+    }
+    #apps-toggle:hover { background: rgba(54,153,255,0.1); }
+
+    #apps-dropdown {
+      display: none;
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 0;
+      background: #fff;
+      border: 1px solid #e4e6ef;
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.14);
+      padding: 16px;
+      z-index: 999;
+      min-width: 220px;
+    }
+    #apps-dropdown.open { display: block; }
+
+    .apps-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .app-tile {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 14px 10px;
+      border-radius: 10px;
+      border: 2px solid transparent;
+      text-decoration: none;
+      color: #181c32;
+      font-size: 0.78rem;
+      font-weight: 600;
+      transition: border-color 0.15s, background 0.15s;
+      cursor: pointer;
+    }
+    .app-tile:hover {
+      border-color: #3699ff;
+      background: #f1f8ff;
+      color: #181c32;
+    }
+    .app-tile.active {
+      border-color: #3699ff;
+      background: #e8f4ff;
+    }
+    .app-tile .tile-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+    }
+    .app-tile .tile-icon.parkour { background: #e8f4ff; color: #3699ff; }
+    .app-tile .tile-icon.fishing { background: #e6f9ef; color: #1bc5bd; }
+
+    /* ── Main layout: no sidebar ─────────────────────────────── */
+    .page-content {
+      padding: 32px 40px;
+      max-width: 1200px;
+      margin: 0 auto;
+      width: 100%;
+    }
+  </style>
   {% block extra_css %}{% endblock %}
 </head>
-<body id="kt_app_body"
-  data-kt-app-header-fixed="true"
-  data-kt-app-header-fixed-mobile="true"
-  data-kt-app-sidebar-enabled="true"
-  data-kt-app-sidebar-fixed="true"
-  data-kt-app-sidebar-push-header="true"
-  data-kt-app-sidebar-push-toolbar="true"
-  data-kt-app-sidebar-push-footer="true"
-  class="app-default">
+<body id="kt_app_body" data-kt-app-header-fixed="true" class="app-default">
 
   <script>
     var defaultThemeMode = "light";
@@ -43,85 +115,59 @@
       <div id="kt_app_header" class="app-header">
         <div class="app-container container-fluid d-flex align-items-stretch justify-content-between" id="kt_app_header_container">
 
-          <!--begin::Logo-->
-          <div class="app-header-logo d-flex align-items-center me-5">
-            <button class="btn btn-icon btn-color-gray-500 btn-active-color-primary w-35px h-35px ms-n2 me-2 d-lg-none" id="kt_app_sidebar_mobile_toggle">
-              <i class="ki-outline ki-abstract-14 fs-2"></i>
-            </button>
-            <a href="{% url 'parkour_game' %}" class="d-flex align-items-center gap-2">
-              <i class="ki-outline ki-rocket text-primary fs-1"></i>
-              <span class="text-gray-900 fw-bolder fs-4">Parkour</span>
-            </a>
-          </div>
-          <!--end::Logo-->
+          <!--begin::Left: apps grid toggle-->
+          <div class="d-flex align-items-center gap-3" style="position:relative;">
 
-          <!--begin::Header right-->
+            <!-- 3×3 grid icon button -->
+            <button id="apps-toggle" aria-label="Open game menu">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <rect x="1"  y="1"  width="5" height="5" rx="1.5" fill="#7e8299"/>
+                <rect x="7.5" y="1"  width="5" height="5" rx="1.5" fill="#7e8299"/>
+                <rect x="14" y="1"  width="5" height="5" rx="1.5" fill="#7e8299"/>
+                <rect x="1"  y="7.5" width="5" height="5" rx="1.5" fill="#7e8299"/>
+                <rect x="7.5" y="7.5" width="5" height="5" rx="1.5" fill="#7e8299"/>
+                <rect x="14" y="7.5" width="5" height="5" rx="1.5" fill="#7e8299"/>
+                <rect x="1"  y="14" width="5" height="5" rx="1.5" fill="#7e8299"/>
+                <rect x="7.5" y="14" width="5" height="5" rx="1.5" fill="#7e8299"/>
+                <rect x="14" y="14" width="5" height="5" rx="1.5" fill="#7e8299"/>
+              </svg>
+            </button>
+
+            <!-- Dropdown -->
+            <div id="apps-dropdown">
+              <div class="text-muted fw-semibold fs-8 text-uppercase mb-3 ps-1">Games</div>
+              <div class="apps-grid">
+                <a href="{% url 'parkour_game' %}" class="app-tile {% block parkour_active %}{% endblock %}">
+                  <span class="tile-icon parkour">🏃</span>
+                  <span>Parkour</span>
+                </a>
+                <a href="{% url 'fishing_game' %}" class="app-tile {% block fishing_active %}{% endblock %}">
+                  <span class="tile-icon fishing">🎣</span>
+                  <span>Fishing</span>
+                </a>
+              </div>
+            </div>
+
+          </div>
+          <!--end::Left-->
+
+          <!--begin::Right (empty, reserved for future)-->
           <div class="d-flex align-items-stretch justify-content-end flex-lg-grow-1">
           </div>
-          <!--end::Header right-->
+          <!--end::Right-->
 
         </div>
       </div>
       <!--end::Header-->
 
-      <!--begin::Wrapper-->
+      <!--begin::Wrapper (no sidebar)-->
       <div class="app-wrapper d-flex flex-column flex-column-fluid" id="kt_app_wrapper">
-        <div class="app-container container-fluid d-flex flex-row-fluid">
-
-          <!--begin::Sidebar-->
-          <div id="kt_app_sidebar" class="app-sidebar flex-column"
-            data-kt-drawer="true"
-            data-kt-drawer-name="app-sidebar"
-            data-kt-drawer-activate="{default: true, lg: false}"
-            data-kt-drawer-overlay="true"
-            data-kt-drawer-width="auto"
-            data-kt-drawer-direction="start"
-            data-kt-drawer-toggle="#kt_app_sidebar_mobile_toggle">
-
-            <div id="kt_app_sidebar_menu" data-kt-menu="true"
-              class="menu menu-sub-indention menu-rounded menu-column menu-active-bg menu-title-gray-600 menu-icon-gray-500 menu-state-primary menu-arrow-gray-500 fw-semibold fs-6 py-4 py-lg-6 ms-lg-n7 px-2 px-lg-0">
-
-              <div id="kt_app_sidebar_menu_wrapper" class="hover-scroll-y px-1 px-lg-5"
-                data-kt-scroll="true"
-                data-kt-scroll-activate="true"
-                data-kt-scroll-height="auto"
-                data-kt-scroll-dependencies="#kt_app_header"
-                data-kt-scroll-wrappers="#kt_app_sidebar_menu"
-                data-kt-scroll-offset="20px">
-
-                <div class="menu-item">
-                  <a class="menu-link" href="{% url 'parkour_game' %}">
-                    <span class="menu-icon"><i class="ki-outline ki-rocket fs-2"></i></span>
-                    <span class="menu-title">Parkour Game</span>
-                  </a>
-                </div>
-
-                <div class="menu-item">
-                  <a class="menu-link" href="{% url 'fishing_game' %}">
-                    <span class="menu-icon"><i class="ki-outline ki-water fs-2"></i></span>
-                    <span class="menu-title">Fishing Game</span>
-                  </a>
-                </div>
-
-              </div>
+        <div class="app-main flex-column flex-row-fluid" id="kt_app_main">
+          <div class="d-flex flex-column flex-column-fluid">
+            <div class="page-content">
+              {% block content %}{% endblock %}
             </div>
           </div>
-          <!--end::Sidebar-->
-
-          <!--begin::Main-->
-          <div class="app-main flex-column flex-row-fluid" id="kt_app_main">
-            <div class="d-flex flex-column flex-column-fluid">
-
-              <!--begin::Content-->
-              <div id="kt_app_content" class="app-content flex-column-fluid px-5 px-lg-10 pt-5 pt-lg-10 pb-10">
-                {% block content %}{% endblock %}
-              </div>
-              <!--end::Content-->
-
-            </div>
-          </div>
-          <!--end::Main-->
-
         </div>
       </div>
       <!--end::Wrapper-->
@@ -131,6 +177,21 @@
 
   <script src="{% static 'assets/plugins/global/plugins.bundle.js' %}"></script>
   <script src="{% static 'assets/js/scripts.bundle.js' %}"></script>
+  <script>
+    // Toggle apps dropdown open/close
+    const appsToggle = document.getElementById("apps-toggle");
+    const appsDropdown = document.getElementById("apps-dropdown");
+    appsToggle.addEventListener("click", function(e) {
+      e.stopPropagation();
+      appsDropdown.classList.toggle("open");
+    });
+    document.addEventListener("click", function() {
+      appsDropdown.classList.remove("open");
+    });
+    appsDropdown.addEventListener("click", function(e) {
+      e.stopPropagation();
+    });
+  </script>
   {% block extra_js %}{% endblock %}
 </body>
 </html>

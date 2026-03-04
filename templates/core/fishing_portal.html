@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title %}Fishing Game{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* Remove content padding so iframe fills edge-to-edge */
+  #kt_app_content {
+    padding: 0 !important;
+    overflow: hidden;
+  }
+  #fishing-wrap {
+    position: relative;
+    width: 100%;
+    /* JS will set exact height; this is the fallback */
+    height: calc(100vh - 70px);
+    overflow: hidden;
+  }
+  #fishing-frame {
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: block;
+  }
+  #fs-fishing-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 10;
+    background: rgba(79, 195, 247, 0.15);
+    border: 1px solid rgba(79, 195, 247, 0.4);
+    color: #4fc3f7;
+    border-radius: 6px;
+    cursor: pointer;
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+    padding: 0;
+  }
+  #fs-fishing-btn:hover { background: rgba(79, 195, 247, 0.3); }
+  #fs-fishing-btn svg { display: block; }
+
+  #fishing-wrap:fullscreen,
+  #fishing-wrap:-webkit-full-screen {
+    width: 100vw;
+    height: 100vh;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="fishing-wrap">
+  <iframe id="fishing-frame" src="{% url 'fishing_game' %}" allowfullscreen></iframe>
+  <button id="fs-fishing-btn" title="Toggle fullscreen" aria-label="Toggle fullscreen">
+    <svg id="ffs-expand" width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+      <path d="M1 1h4.5v1.5H2.5v3H1V1zm9.5 0H15v4.5h-1.5v-3h-3V1zM1 10.5h1.5v3h3V15H1v-4.5zm11.5 3v-3H15V15h-4.5v-1.5h3z"/>
+    </svg>
+    <svg id="ffs-compress" width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="display:none">
+      <path d="M5.5 1v4.5H1V7h6V1H5.5zm4.5 0v1.5h3.5v3H15V1H10zM1 9v1.5h4.5V15H7V9H1zm8 0v6h1.5v-3.5H14V10h-3.5V9H9z"/>
+    </svg>
+  </button>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  const wrap = document.getElementById("fishing-wrap");
+
+  // Dynamically measure header height so iframe fills exactly the remaining space
+  function resize() {
+    const hdr = document.getElementById("kt_app_header");
+    const offset = hdr ? hdr.offsetHeight : 70;
+    wrap.style.height = (window.innerHeight - offset) + "px";
+  }
+  resize();
+  window.addEventListener("resize", resize);
+
+  // Fullscreen toggle
+  const btn      = document.getElementById("fs-fishing-btn");
+  const expand   = document.getElementById("ffs-expand");
+  const compress = document.getElementById("ffs-compress");
+
+  btn.addEventListener("click", () => {
+    if (!document.fullscreenElement) {
+      (wrap.requestFullscreen || wrap.webkitRequestFullscreen).call(wrap);
+    } else {
+      (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+    }
+  });
+
+  document.addEventListener("fullscreenchange", updateIcon);
+  document.addEventListener("webkitfullscreenchange", updateIcon);
+
+  function updateIcon() {
+    const isFs = !!document.fullscreenElement;
+    expand.style.display   = isFs ? "none"  : "block";
+    compress.style.display = isFs ? "block" : "none";
+  }
+})();
+</script>
+{% endblock %}

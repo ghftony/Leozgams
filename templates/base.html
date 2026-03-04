@@ -9,15 +9,77 @@
   <link href="{% static 'assets/plugins/global/plugins.bundle.css' %}" rel="stylesheet" />
   <link href="{% static 'assets/css/style.bundle.css' %}" rel="stylesheet" />
   {% block extra_css %}{% endblock %}
+  <style>
+    /* ── Game Launcher ─────────────────────────────────────────── */
+    #launcher-btn {
+      background: none;
+      border: none;
+      padding: 6px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s;
+    }
+    #launcher-btn:hover { background: rgba(0,0,0,0.08); }
+    #launcher-btn svg { display: block; }
+
+    #launcher-popup {
+      display: none;
+      position: fixed;
+      top: 60px;
+      left: 12px;
+      z-index: 9999;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.18);
+      padding: 16px 12px 12px;
+      width: 220px;
+    }
+    #launcher-popup.open { display: block; }
+
+    .launcher-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 4px;
+    }
+    .launcher-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 14px 8px;
+      border-radius: 10px;
+      text-decoration: none;
+      color: #3f4254;
+      font-size: 12px;
+      font-weight: 500;
+      transition: background 0.15s;
+    }
+    .launcher-item:hover {
+      background: #f1f3f9;
+      color: #3f4254;
+      text-decoration: none;
+    }
+    .launcher-item .li-icon {
+      width: 64px;
+      height: 64px;
+      border-radius: 14px;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .launcher-item .li-icon svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+  </style>
 </head>
 <body id="kt_app_body"
   data-kt-app-header-fixed="true"
   data-kt-app-header-fixed-mobile="true"
-  data-kt-app-sidebar-enabled="true"
-  data-kt-app-sidebar-fixed="true"
-  data-kt-app-sidebar-push-header="true"
-  data-kt-app-sidebar-push-toolbar="true"
-  data-kt-app-sidebar-push-footer="true"
   class="app-default">
 
   <script>
@@ -36,6 +98,82 @@
     }
   </script>
 
+  <!-- Game launcher popup -->
+  <div id="launcher-popup">
+    <div class="launcher-grid">
+      <a class="launcher-item" href="{% url 'parkour_game' %}">
+        <div class="li-icon">
+          <!-- Parkour: character jumping between two platforms -->
+          <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Sky background -->
+            <rect width="64" height="64" fill="#e8f0fe" rx="14"/>
+            <!-- Left lower platform -->
+            <rect x="2" y="50" width="20" height="7" rx="3" fill="#1a73e8"/>
+            <!-- Right upper platform -->
+            <rect x="42" y="36" width="20" height="7" rx="3" fill="#1a73e8"/>
+            <!-- Speed lines (left of character) -->
+            <line x1="13" y1="28" x2="5"  y2="28" stroke="#1a73e8" stroke-width="1.5" stroke-linecap="round" opacity="0.45"/>
+            <line x1="13" y1="32" x2="6"  y2="32" stroke="#1a73e8" stroke-width="1.5" stroke-linecap="round" opacity="0.28"/>
+            <line x1="13" y1="24" x2="7"  y2="24" stroke="#1a73e8" stroke-width="1.5" stroke-linecap="round" opacity="0.20"/>
+            <!-- Character mid-jump (leaning right toward higher platform) -->
+            <!-- Head -->
+            <circle cx="32" cy="13" r="6" fill="#FF7043"/>
+            <!-- Torso (slight forward lean) -->
+            <line x1="31" y1="19" x2="29" y2="31" stroke="#FF7043" stroke-width="5" stroke-linecap="round"/>
+            <!-- Leading arm (right, reaching forward/up) -->
+            <line x1="30" y1="23" x2="42" y2="18" stroke="#FF7043" stroke-width="3.5" stroke-linecap="round"/>
+            <!-- Trailing arm (left, back) -->
+            <line x1="30" y1="23" x2="19" y2="27" stroke="#FF7043" stroke-width="3.5" stroke-linecap="round"/>
+            <!-- Leading leg (right, forward) -->
+            <line x1="29" y1="31" x2="38" y2="42" stroke="#FF7043" stroke-width="3.5" stroke-linecap="round"/>
+            <!-- Trailing leg (left, back and bent) -->
+            <line x1="29" y1="31" x2="20" y2="38" stroke="#FF7043" stroke-width="3.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        Parkour
+      </a>
+      <a class="launcher-item" href="{% url 'fishing_portal' %}">
+        <div class="li-icon">
+          <!-- Fishing: person sitting on bank, rod out over water, fish visible -->
+          <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Sky -->
+            <rect width="64" height="64" fill="#e3f2fd" rx="14"/>
+            <!-- Water -->
+            <rect x="28" y="36" width="36" height="28" fill="#90caf9" rx="0"/>
+            <!-- Water surface wave -->
+            <path d="M28 37 Q38 33 48 37 Q56 41 64 37" stroke="#1565C0" stroke-width="1.5" fill="none"/>
+            <!-- Ground / bank -->
+            <rect x="0" y="42" width="34" height="22" fill="#6D4C41"/>
+            <rect x="0" y="40" width="34" height="5" rx="2" fill="#8D6E63"/>
+            <!-- Fishing line -->
+            <line x1="56" y1="9" x2="50" y2="37" stroke="#78909C" stroke-width="1"/>
+            <!-- Bobber -->
+            <circle cx="50" cy="37" r="3" fill="#E53935"/>
+            <circle cx="50" cy="35.5" r="1.5" fill="#ffffff" opacity="0.6"/>
+            <!-- Fish underwater -->
+            <ellipse cx="46" cy="50" rx="8" ry="4.5" fill="#29B6F6"/>
+            <path d="M54 50 L62 45 L62 55 Z" fill="#29B6F6"/>
+            <circle cx="42" cy="49" r="1.5" fill="white"/>
+            <circle cx="42.5" cy="49" r="0.7" fill="#1565C0"/>
+            <!-- Rod -->
+            <line x1="22" y1="28" x2="56" y2="9" stroke="#5D4037" stroke-width="2.5" stroke-linecap="round"/>
+            <!-- Person sitting on bank -->
+            <!-- Head -->
+            <circle cx="13" cy="20" r="6.5" fill="#FFAB40"/>
+            <!-- Body -->
+            <rect x="9" y="26" width="9" height="12" rx="3" fill="#1565C0"/>
+            <!-- Arm holding rod -->
+            <line x1="18" y1="30" x2="22" y2="28" stroke="#FFAB40" stroke-width="3" stroke-linecap="round"/>
+            <!-- Legs (sitting, dangling off bank edge) -->
+            <line x1="11" y1="38" x2="7"  y2="46" stroke="#1565C0" stroke-width="3.5" stroke-linecap="round"/>
+            <line x1="16" y1="38" x2="22" y2="46" stroke="#1565C0" stroke-width="3.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        Fishing
+      </a>
+    </div>
+  </div>
+
   <div class="d-flex flex-column flex-root app-root" id="kt_app_root">
     <div class="app-page flex-column flex-column-fluid" id="kt_app_page">
 
@@ -45,10 +183,22 @@
 
           <!--begin::Logo-->
           <div class="app-header-logo d-flex align-items-center me-5">
-            <button class="btn btn-icon btn-color-gray-500 btn-active-color-primary w-35px h-35px ms-n2 me-2 d-lg-none" id="kt_app_sidebar_mobile_toggle">
-              <i class="ki-outline ki-abstract-14 fs-2"></i>
+            <!-- Dots launcher button -->
+            <button id="launcher-btn" aria-label="Open game menu" title="Games">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="3.5"  cy="3.5"  r="2" fill="#5E6278"/>
+                <circle cx="10"   cy="3.5"  r="2" fill="#5E6278"/>
+                <circle cx="16.5" cy="3.5"  r="2" fill="#5E6278"/>
+                <circle cx="3.5"  cy="10"   r="2" fill="#5E6278"/>
+                <circle cx="10"   cy="10"   r="2" fill="#5E6278"/>
+                <circle cx="16.5" cy="10"   r="2" fill="#5E6278"/>
+                <circle cx="3.5"  cy="16.5" r="2" fill="#5E6278"/>
+                <circle cx="10"   cy="16.5" r="2" fill="#5E6278"/>
+                <circle cx="16.5" cy="16.5" r="2" fill="#5E6278"/>
+              </svg>
             </button>
-            <a href="{% url 'parkour_game' %}" class="d-flex align-items-center gap-2">
+
+            <a href="{% url 'parkour_game' %}" class="d-flex align-items-center gap-2 ms-3">
               <i class="ki-outline ki-rocket text-primary fs-1"></i>
               <span class="text-gray-900 fw-bolder fs-4">Parkour</span>
             </a>
@@ -66,55 +216,16 @@
 
       <!--begin::Wrapper-->
       <div class="app-wrapper d-flex flex-column flex-column-fluid" id="kt_app_wrapper">
-        <div class="app-container container-fluid d-flex flex-row-fluid">
+        <div class="app-main flex-column flex-row-fluid" id="kt_app_main">
+          <div class="d-flex flex-column flex-column-fluid">
 
-          <!--begin::Sidebar-->
-          <div id="kt_app_sidebar" class="app-sidebar flex-column"
-            data-kt-drawer="true"
-            data-kt-drawer-name="app-sidebar"
-            data-kt-drawer-activate="{default: true, lg: false}"
-            data-kt-drawer-overlay="true"
-            data-kt-drawer-width="auto"
-            data-kt-drawer-direction="start"
-            data-kt-drawer-toggle="#kt_app_sidebar_mobile_toggle">
-
-            <div id="kt_app_sidebar_menu" data-kt-menu="true"
-              class="menu menu-sub-indention menu-rounded menu-column menu-active-bg menu-title-gray-600 menu-icon-gray-500 menu-state-primary menu-arrow-gray-500 fw-semibold fs-6 py-4 py-lg-6 ms-lg-n7 px-2 px-lg-0">
-
-              <div id="kt_app_sidebar_menu_wrapper" class="hover-scroll-y px-1 px-lg-5"
-                data-kt-scroll="true"
-                data-kt-scroll-activate="true"
-                data-kt-scroll-height="auto"
-                data-kt-scroll-dependencies="#kt_app_header"
-                data-kt-scroll-wrappers="#kt_app_sidebar_menu"
-                data-kt-scroll-offset="20px">
-
-                <div class="menu-item">
-                  <a class="menu-link active" href="{% url 'parkour_game' %}">
-                    <span class="menu-icon"><i class="ki-outline ki-rocket fs-2"></i></span>
-                    <span class="menu-title">Parkour Game</span>
-                  </a>
-                </div>
-
-              </div>
+            <!--begin::Content-->
+            <div id="kt_app_content" class="app-content flex-column-fluid px-5 px-lg-10 pt-5 pt-lg-10 pb-10">
+              {% block content %}{% endblock %}
             </div>
+            <!--end::Content-->
+
           </div>
-          <!--end::Sidebar-->
-
-          <!--begin::Main-->
-          <div class="app-main flex-column flex-row-fluid" id="kt_app_main">
-            <div class="d-flex flex-column flex-column-fluid">
-
-              <!--begin::Content-->
-              <div id="kt_app_content" class="app-content flex-column-fluid px-5 px-lg-10 pt-5 pt-lg-10 pb-10">
-                {% block content %}{% endblock %}
-              </div>
-              <!--end::Content-->
-
-            </div>
-          </div>
-          <!--end::Main-->
-
         </div>
       </div>
       <!--end::Wrapper-->
@@ -124,6 +235,23 @@
 
   <script src="{% static 'assets/plugins/global/plugins.bundle.js' %}"></script>
   <script src="{% static 'assets/js/scripts.bundle.js' %}"></script>
+  <script>
+    (function () {
+      const btn = document.getElementById('launcher-btn');
+      const popup = document.getElementById('launcher-popup');
+
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        popup.classList.toggle('open');
+      });
+
+      document.addEventListener('click', function (e) {
+        if (!popup.contains(e.target)) {
+          popup.classList.remove('open');
+        }
+      });
+    })();
+  </script>
   {% block extra_js %}{% endblock %}
 </body>
 </html>

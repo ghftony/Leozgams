@@ -8,8 +8,13 @@
   #game-wrapper {
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: stretch;
     gap: 10px;
+    width: 100%;
+  }
+  #canvas-container {
+    position: relative;
+    width: 100%;
   }
   #game-canvas {
     border: 2px solid #3699ff;
@@ -18,6 +23,53 @@
     display: block;
     cursor: none;
     outline: none;
+    width: 100%;
+    aspect-ratio: 2 / 1;
+  }
+  #fullscreen-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 10;
+    background: rgba(54, 153, 255, 0.15);
+    border: 1px solid rgba(54, 153, 255, 0.4);
+    color: #3699ff;
+    border-radius: 6px;
+    cursor: pointer;
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+    padding: 0;
+  }
+  #fullscreen-btn:hover { background: rgba(54, 153, 255, 0.3); }
+  #fullscreen-btn svg { display: block; }
+
+  /* Fullscreen layout */
+  #game-wrapper:fullscreen,
+  #game-wrapper:-webkit-full-screen {
+    background: #040410;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100vw;
+    height: 100vh;
+    gap: 8px;
+    padding: 8px;
+    box-sizing: border-box;
+  }
+  #game-wrapper:fullscreen #canvas-container,
+  #game-wrapper:-webkit-full-screen #canvas-container {
+    width: min(100vw, calc((100vh - 80px) * 2));
+    flex-shrink: 0;
+  }
+  #game-wrapper:fullscreen #game-canvas,
+  #game-wrapper:-webkit-full-screen #game-canvas {
+    width: 100%;
+    aspect-ratio: 2 / 1;
   }
   #hud {
     display: flex;
@@ -51,7 +103,17 @@
     <div>Lives: <span id="lives-display">3</span></div>
     <div>Coins: <span id="coins-display" class="coins-val">0</span></div>
   </div>
-  <canvas id="game-canvas" width="920" height="460" tabindex="0"></canvas>
+  <div id="canvas-container">
+    <canvas id="game-canvas" width="920" height="460" tabindex="0"></canvas>
+    <button id="fullscreen-btn" title="Toggle fullscreen" aria-label="Toggle fullscreen">
+      <svg id="fs-icon-expand" width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+        <path d="M1 1h4.5v1.5H2.5v3H1V1zm9.5 0H15v4.5h-1.5v-3h-3V1zM1 10.5h1.5v3h3V15H1v-4.5zm11.5 3v-3H15V15h-4.5v-1.5h3z"/>
+      </svg>
+      <svg id="fs-icon-compress" width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="display:none">
+        <path d="M5.5 1v4.5H1V7h6V1H5.5zm4.5 0v1.5h3.5v3H15V1H10zM1 9v1.5h4.5V15H7V9H1zm8 0v6h1.5v-3.5H14V10h-3.5V9H9z"/>
+      </svg>
+    </button>
+  </div>
   <div id="controls-hint">
     WASD / Arrows to move &nbsp;|&nbsp; Space / W / ↑ to jump (double jump!) &nbsp;|&nbsp;
     Wall-slide &amp; wall-jump &nbsp;|&nbsp; P = pause &nbsp;|&nbsp; R = restart
@@ -917,6 +979,30 @@
 
   init();
   requestAnimationFrame(loop);
+
+  // ─── Fullscreen ──────────────────────────────────────────────────────────────
+  const fsBtn      = document.getElementById("fullscreen-btn");
+  const fsExpand   = document.getElementById("fs-icon-expand");
+  const fsCompress = document.getElementById("fs-icon-compress");
+  const wrapper    = document.getElementById("game-wrapper");
+
+  fsBtn.addEventListener("click", () => {
+    if (!document.fullscreenElement) {
+      (wrapper.requestFullscreen || wrapper.webkitRequestFullscreen).call(wrapper);
+    } else {
+      (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+    }
+  });
+
+  document.addEventListener("fullscreenchange", updateFsIcon);
+  document.addEventListener("webkitfullscreenchange", updateFsIcon);
+
+  function updateFsIcon() {
+    const isFs = !!document.fullscreenElement;
+    fsExpand.style.display   = isFs ? "none"  : "block";
+    fsCompress.style.display = isFs ? "block" : "none";
+    if (isFs) canvas.focus();
+  }
 })();
 </script>
 {% endblock %}

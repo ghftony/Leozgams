@@ -1,11 +1,15 @@
 #!/bin/bash
 # Deployment script for gohifun (Parkour Game)
+# Source repo: https://github.com/ghftony/Leozgams (branch: main)
+#
+# == FIRST-TIME SETUP (run once on VPS) ==
+#   git remote set-url origin https://github.com/ghftony/Leozgams.git
 #
 # == HOW TO DEPLOY ==
 # 1. SSH into the VPS
 # 2. Pull latest code and run deploy steps:
 #      cd /home/gohifun
-#      git pull origin claude/import-parkour-game-uOA3I
+#      git pull origin main
 #      source venv/bin/activate
 #      python manage.py migrate
 #      bash deploy.sh

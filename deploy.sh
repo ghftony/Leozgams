@@ -5,7 +5,7 @@
 # 1. SSH into the VPS
 # 2. Pull latest code and run deploy steps:
 #      cd /home/gohifun
-#      git pull origin claude/import-parkour-game-uOA3I
+#      git pull origin main
 #      source venv/bin/activate
 #      python manage.py migrate
 #      bash deploy.sh

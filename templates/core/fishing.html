@@ -130,7 +130,7 @@ body{background:#1a1a2e;color:#eee;font-family:Arial,sans-serif;display:flex;fle
   <div id="load-pct-text">0%</div>
 </div>
 <div id="header">
-  <h1>🎣 Fishing Tycoon <span style="font-size:0.5em;opacity:0.6;font-weight:normal">v1.0.1</span></h1>
+  <h1>🎣 Fishing Tycoon <span style="font-size:0.5em;opacity:0.6;font-weight:normal">v1.0.2</span></h1>
   <div class="stat">💰 $<span id="s-money">0.00</span></div>
   <div class="stat">📈 <span id="s-income">0.00</span>/s</div>
   <div class="stat">🎣 <span id="s-rod">Basic Rod</span></div>
@@ -544,6 +544,10 @@ let catchAnim=null,splashes=[];
 let portraitAnimId=null;
 let aFish=[];for(let i=0;i<18;i++)aFish.push(mkAFish());
 let clouds=Array.from({length:5},()=>({x:Math.random()*900,y:15+Math.random()*55,rw:55+Math.random()*70,spd:6+Math.random()*12}));
+let birds=Array.from({length:10},()=>({x:Math.random()*900,y:12+Math.random()*55,spd:18+Math.random()*16,flap:Math.random()*6.28,sz:2+Math.random()*3}));
+let planes=[],planeT=15+Math.random()*20;
+let skydivers=[],sdT=40+Math.random()*45;
+let ufos=[],ufoT=80+Math.random()*100;
 // ── Music (Phonk Batidão) ────────────────────────────────────────────────────
 const MUSIC=(()=>{
   let actx=null,playing=false,tid=null,nextT=0,bar=0;
@@ -2429,6 +2433,16 @@ function drawBg(){
   const W=cv.width,H=cv.height,sx=shoreX(),gY=groundY(),wsY=waterSurfaceY();
   let g=cx.createLinearGradient(0,0,0,wsY);g.addColorStop(0,'#4fc3f7');g.addColorStop(1,'#b3e5fc');cx.fillStyle=g;cx.fillRect(0,0,W,wsY);
   cx.fillStyle='rgba(255,255,255,.82)';clouds.forEach(cl=>{cx.beginPath();cx.ellipse(cl.x,cl.y,cl.rw*.5,18,0,0,Math.PI*2);cx.ellipse(cl.x+cl.rw*.25,cl.y-10,cl.rw*.3,14,0,0,Math.PI*2);cx.ellipse(cl.x-cl.rw*.2,cl.y-6,cl.rw*.25,12,0,0,Math.PI*2);cx.fill();});
+  // ── Birds ──
+  const _t=Date.now()/1000;
+  cx.strokeStyle='#333';cx.lineWidth=1.3;
+  birds.forEach(b=>{const fw=b.sz*2.2,fh=Math.sin(b.flap+_t*5)*b.sz*1.4;cx.beginPath();cx.moveTo(b.x-fw,b.y+fh);cx.quadraticCurveTo(b.x,b.y-fh*.5,b.x+fw,b.y+fh);cx.stroke();});
+  // ── Aeroplanes ──
+  planes.forEach(p=>{cx.save();cx.translate(p.x,p.y);cx.scale(p.dir,1);const cg=cx.createLinearGradient(-100,0,10,0);cg.addColorStop(0,'rgba(255,255,255,0)');cg.addColorStop(1,'rgba(255,255,255,0.55)');cx.fillStyle=cg;cx.fillRect(-100,-2,100,4);cx.fillStyle='#d0d0d0';cx.beginPath();cx.ellipse(0,0,20,5,0,0,Math.PI*2);cx.fill();cx.fillStyle='#b0b0b0';cx.beginPath();cx.moveTo(-4,-3);cx.lineTo(14,-3);cx.lineTo(14,3);cx.lineTo(-4,3);cx.lineTo(-10,-9);cx.closePath();cx.fill();cx.fillStyle='#c0c0c0';cx.beginPath();cx.moveTo(-16,-3);cx.lineTo(-20,-9);cx.lineTo(-12,-3);cx.closePath();cx.fill();cx.fillStyle='rgba(150,220,255,0.7)';for(let i=0;i<3;i++){cx.beginPath();cx.arc(6-i*7,1,2,0,Math.PI*2);cx.fill();}cx.restore();});
+  // ── Skydivers ──
+  skydivers.forEach(s=>{if(s.y>wsY)return;cx.save();cx.translate(s.x,s.y);if(s.chute){const pg=cx.createRadialGradient(0,-22,2,0,-22,20);pg.addColorStop(0,s.col);pg.addColorStop(1,'rgba(0,0,0,0.15)');cx.fillStyle=pg;cx.beginPath();cx.arc(0,-22,20,-Math.PI,0);cx.closePath();cx.fill();cx.strokeStyle='rgba(0,0,0,0.25)';cx.lineWidth=0.7;for(let i=-3;i<=3;i++){cx.beginPath();cx.moveTo(i*5.5,-22);cx.lineTo(0,0);cx.stroke();}}else{cx.strokeStyle='rgba(255,100,0,0.9)';cx.lineWidth=1.5;cx.beginPath();cx.moveTo(-8,2);cx.lineTo(8,2);cx.stroke();cx.beginPath();cx.moveTo(0,2);cx.lineTo(0,-8);cx.stroke();}cx.fillStyle='#e67e22';cx.beginPath();cx.ellipse(0,3,3,7,0,0,Math.PI*2);cx.fill();cx.fillStyle='#f5cba7';cx.beginPath();cx.arc(0,-6,4,0,Math.PI*2);cx.fill();cx.restore();});
+  // ── UFOs ──
+  ufos.forEach(u=>{cx.save();cx.translate(u.x,u.y);const gg=cx.createRadialGradient(0,0,4,0,0,32);gg.addColorStop(0,'rgba(80,255,120,0.35)');gg.addColorStop(1,'rgba(80,255,120,0)');cx.fillStyle=gg;cx.beginPath();cx.arc(0,0,32,0,Math.PI*2);cx.fill();cx.fillStyle='#9e9e9e';cx.beginPath();cx.ellipse(0,5,24,8,0,0,Math.PI*2);cx.fill();cx.fillStyle='#bdbdbd';cx.beginPath();cx.ellipse(0,0,24,8,0,Math.PI,0);cx.fill();const dg=cx.createRadialGradient(0,-5,1,0,-5,11);dg.addColorStop(0,'rgba(180,255,180,0.8)');dg.addColorStop(1,'rgba(0,180,0,0.1)');cx.fillStyle=dg;cx.beginPath();cx.ellipse(0,-3,11,6,0,Math.PI,0);cx.fill();const bt=Date.now()/350;['#ffe000','#ff3030','#00ff88','#00cfff'].forEach((lc,i)=>{const la=i*Math.PI/2+bt;cx.fillStyle=Math.floor(bt+i)%2===0?lc:'#444';cx.beginPath();cx.arc(Math.cos(la)*19,5+Math.sin(la)*2,2.8,0,Math.PI*2);cx.fill();});cx.restore();});
   g=cx.createLinearGradient(0,wsY,0,H);g.addColorStop(0,'#1565c0');g.addColorStop(1,'#0a2e52');cx.fillStyle=g;cx.fillRect(sx,wsY,W-sx,H-wsY);
   cx.strokeStyle='rgba(255,255,255,.12)';cx.lineWidth=1;for(let i=0;i<10;i++){const wx=sx+20+((Date.now()/60+i*80)%(W-sx-40)),wy=wsY+8+i*8;cx.beginPath();cx.moveTo(wx,wy);cx.lineTo(wx+40,wy);cx.stroke();}
   g=cx.createLinearGradient(0,gY-40,0,H);g.addColorStop(0,'#388e3c');g.addColorStop(.4,'#2e7d32');g.addColorStop(1,'#1b5e20');cx.fillStyle=g;cx.fillRect(0,gY,sx+25,H-gY);
@@ -3943,6 +3957,13 @@ function update(dt){
     else setHint('Walk right (D / →) to reach the water');
   }
   clouds.forEach(cl=>{cl.x+=cl.spd*dt;if(cl.x>cv.width+120)cl.x=-120;});
+  birds.forEach(b=>{b.x+=b.spd*dt;if(b.x>cv.width+40)b.x=-40;});
+  planeT-=dt;if(planeT<=0){planeT=18+Math.random()*22;const dir=Math.random()<0.5?1:-1;planes.push({x:dir>0?-70:cv.width+70,y:10+Math.random()*55,spd:90+Math.random()*70,dir,life:18});}
+  planes.forEach(p=>{p.x+=p.spd*p.dir*dt;p.life-=dt;});planes=planes.filter(p=>p.life>0);
+  sdT-=dt;if(sdT<=0){sdT=40+Math.random()*50;skydivers.push({x:40+Math.random()*(cv.width-80),y:-35,vy:70,chute:false,chuteIn:1.5+Math.random()*2.5,life:22,col:['#e74c3c','#3498db','#9b59b6','#e67e22','#1abc9c'][Math.floor(Math.random()*5)]});}
+  skydivers.forEach(s=>{s.y+=s.vy*dt;s.chuteIn-=dt;if(s.chuteIn<=0&&!s.chute){s.chute=true;s.vy=18;}s.life-=dt;});skydivers=skydivers.filter(s=>s.life>0);
+  ufoT-=dt;if(ufoT<=0){ufoT=75+Math.random()*90;const dir=Math.random()<0.5?1:-1;ufos.push({x:dir>0?-70:cv.width+70,y:12+Math.random()*50,vx:dir*(35+Math.random()*25),wob:Math.random()*6.28,life:16});}
+  ufos.forEach(u=>{u.x+=u.vx*dt;u.wob+=dt*2.5;u.y+=Math.sin(u.wob)*0.6;u.life-=dt;});ufos=ufos.filter(u=>u.life>0);
   const sx=shoreX(),W=cv.width,H=cv.height,wsY=waterSurfaceY();
   aFish.forEach(f=>{
     f.x+=f.vx*dt;f.y+=f.vy*dt;f.wig+=3.5*dt;

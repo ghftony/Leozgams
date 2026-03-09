@@ -1,14 +1,16 @@
 #!/bin/bash
-# Deployment script for gohifun (Parkour Game)
+# Deployment script for parkour (Parkour Game)
 # Source repo: https://github.com/ghftony/Leozgams (branch: main)
+# Server: 185.230.218.76
+# Domain: parkour.lovesupplychain.com
 #
 # == FIRST-TIME SETUP (run once on VPS) ==
 #   git remote set-url origin https://github.com/ghftony/Leozgams.git
 #
 # == HOW TO DEPLOY ==
-# 1. SSH into the VPS
+# 1. SSH into the VPS (185.230.218.76)
 # 2. Pull latest code and run deploy steps:
-#      cd /home/gohifun
+#      cd /var/www/parkour
 #      git pull origin main
 #      source venv/bin/activate
 #      python manage.py migrate
@@ -27,7 +29,7 @@ echo "==> Collecting static files..."
 python manage.py collectstatic --noinput
 
 echo "==> Restarting gunicorn service..."
-sudo systemctl restart gohifun
+sudo systemctl restart parkour.service
 
 echo "==> Purging Cloudflare cache for /static/*..."
 # Requires CF_ZONE_ID and CF_API_TOKEN environment variables to be set.

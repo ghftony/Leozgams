@@ -34,15 +34,33 @@ big STEAL button to sneak into another player's base and steal a Gobo.
 
 ## Gobo types
 
+There are 16 Gobos. The rarer ones are harder to find on the carpet and in other players' bases.
+
 | Gobo | Rarity | Price | Money per second |
 | --- | --- | --- | --- |
 | Gobo | Common | $10 | $1 |
-| Leaf Gobo | Rare | $60 | $5 |
-| Ice Gobo | Epic | $300 | $20 |
-| Fire Gobo | Legendary | $1,500 | $80 |
-| Galaxy Gobo | Mythic | $7,500 | $350 |
-| Golden Gobo | Gobo God | $30,000 | $1,500 |
-| Rainbow Gobo | Secret | $150,000 | $7,000 |
+| Bubblegum Gobo | Common | $15 | $2 |
+| Leaf Gobo | Uncommon | $50 | $4 |
+| Choco Gobo | Uncommon | $80 | $6 |
+| Ice Gobo | Rare | $250 | $15 |
+| Ocean Gobo | Rare | $400 | $22 |
+| Fire Gobo | Epic | $1,200 | $60 |
+| Ninja Gobo | Epic | $2,000 | $90 |
+| Robo Gobo | Legendary | $6,000 | $250 |
+| Pirate Gobo | Legendary | $9,000 | $350 |
+| Galaxy Gobo | Mythic | $25,000 | $900 |
+| Ghost Gobo | Mythic | $40,000 | $1,300 |
+| Golden Gobo | Gobo God | $120,000 | $3,500 |
+| Diamond Gobo | Gobo God | $200,000 | $5,500 |
+| Rainbow Gobo | Secret | $600,000 | $15,000 |
+| Dragon Gobo | Secret | $1,000,000 | $25,000 |
+
+## Animations
+
+Gobos wobble, blink and waddle along the carpet. Gobos in your base pop out coins, and Gobos in other
+players' bases shiver when you come close. The thief walks with swinging legs, clouds float by, and
+comic bursts (KA-CHING!, WOW!, SOLD!, ZOOM!) and full-screen flashes (SNEAK ATTACK!, YOINK!,
+TOO SLOW!, REBIRTH!) pop up when things happen.
 
 ## Changing the game
 

@@ -1,7 +1,8 @@
 # Steal a Gobo (Scratch game)
 
-A Scratch 3 game. Sneak into the Gobo Vault, grab a Gobo, and run back to your base
-before the Guard catches you. Every Gobo in your base makes money each second.
+A Scratch 3 game in the style of "Steal a Brainrot" / "Steal a Scratch Cat", but with Gobos.
+Buy Gobos from the red carpet, keep them in your base so they make money, steal Gobos
+from the Rival's base, and stop the Rival from stealing yours.
 
 ## How to open it
 
@@ -12,13 +13,33 @@ before the Guard catches you. Every Gobo in your base makes money each second.
 
 ## How to play
 
-- **Arrow keys** or **W A S D**: move the thief.
-- Touch a Gobo in the red **Gobo Vault** to grab it (the Guard will chase you!).
-- Carry it into the blue **Your Base** to keep it.
-- Gobo types: yellow Gobo = $2/s, Gold Gobo = $10/s, Diamond Gobo = $50/s (rare).
-- Press **U** to buy more speed (the price doubles each time).
-- The Guard gets faster as you steal more Gobos. You have 3 lives.
-- Reach **$1000** to win.
+| Key | What it does |
+| --- | --- |
+| Arrow keys or W A S D | Walk |
+| E or Space | Buy a Gobo on the carpet, or steal a Gobo from the Rival Base |
+| X | Sell one of your Gobos (you get half the price back) |
+| U | Buy faster shoes |
+| R | Rebirth: start again with no Gobos, but every Gobo makes more money |
+
+- Gobos walk along the **red carpet**. Touch one and press **E** to buy it. It goes to **Your Base**.
+- Every Gobo in your base makes money every second.
+- Walk into the **Rival Base**, touch a Gobo and press **E** to steal it. Run back to your base!
+  If the Rival catches you, he takes it back.
+- The Rival also comes to steal your best Gobo. Touch him to get it back.
+- Step on the green **LOCK** button to put lasers on your base for 25 seconds.
+  Sometimes the Rival locks his base too.
+
+## Gobo types
+
+| Gobo | Rarity | Price | Money per second |
+| --- | --- | --- | --- |
+| Gobo | Common | $10 | $1 |
+| Leaf Gobo | Rare | $60 | $5 |
+| Ice Gobo | Epic | $300 | $20 |
+| Fire Gobo | Legendary | $1,500 | $80 |
+| Galaxy Gobo | Mythic | $7,500 | $350 |
+| Golden Gobo | Gobo God | $30,000 | $1,500 |
+| Rainbow Gobo | Secret | $150,000 | $7,000 |
 
 ## Changing the game
 

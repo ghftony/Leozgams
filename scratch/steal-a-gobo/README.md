@@ -1,8 +1,8 @@
 # Steal a Gobo (Scratch game)
 
 A Scratch 3 game in the style of "Steal a Brainrot" / "Steal a Scratch Cat", but with Gobos.
-Buy Gobos from the red carpet, keep them in your base so they make money, steal Gobos
-from the Rival's base, and stop the Rival from stealing yours.
+Buy Gobos from the red carpet, keep them in your base so they make money, and press the
+big STEAL button to sneak into another player's base and steal a Gobo.
 
 ## How to open it
 
@@ -16,18 +16,21 @@ from the Rival's base, and stop the Rival from stealing yours.
 | Key | What it does |
 | --- | --- |
 | Arrow keys or W A S D | Walk |
-| E or Space | Buy a Gobo on the carpet, or steal a Gobo from the Rival Base |
+| E or Space | Buy a Gobo on the carpet, or steal a Gobo in another player's base |
 | X | Sell one of your Gobos (you get half the price back) |
 | U | Buy faster shoes |
 | R | Rebirth: start again with no Gobos, but every Gobo makes more money |
+| Mouse click | Press the STEAL button |
 
 - Gobos walk along the **red carpet**. Touch one and press **E** to buy it. It goes to **Your Base**.
 - Every Gobo in your base makes money every second.
-- Walk into the **Rival Base**, touch a Gobo and press **E** to steal it. Run back to your base!
-  If the Rival catches you, he takes it back.
-- The Rival also comes to steal your best Gobo. Touch him to get it back.
-- Step on the green **LOCK** button to put lasers on your base for 25 seconds.
-  Sometimes the Rival locks his base too.
+- Click the big **STEAL** button. You go into another player's base (Bob, Zara, Max or Luna)
+  full of random Gobos.
+- Touch one Gobo and press **E** to steal it. You can only steal **one**. Then you go straight
+  back to the place you were before, and the Gobo goes into your base.
+- You have 20 seconds in their base. If you are too slow, you go home with nothing.
+- After you press STEAL, you must wait **1 minute 30 seconds** before you can steal again.
+  The button turns grey and shows how many seconds are left.
 
 ## Gobo types
 

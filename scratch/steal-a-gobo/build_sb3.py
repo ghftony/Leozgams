@@ -2,8 +2,8 @@
 """Build "Steal a Gobo" as a Scratch 3 project file (Steal_a_Gobo.sb3).
 
 A "Steal a Brainrot" style game with Gobos: buy Gobos from the red carpet, keep them in
-your base so they make money, steal Gobos from the Rival's base, and stop the Rival from
-stealing yours.
+your base so they make money, and press the STEAL button to sneak into another player's
+base and steal one random Gobo (once every 1 minute 30 seconds).
 
 Run:  python3 build_sb3.py
 Then open the .sb3 at https://scratch.mit.edu -> Create -> File -> Load from your computer.
@@ -108,28 +108,41 @@ def person_svg(shirt, stripe, hat, mask):
 
 
 PLAYER = person_svg("#2f6fd6", "#ffffff", "#1d3f8a", "#111")
-RIVAL = person_svg("#c82a2a", "#222222", "#7a1010", "#3a0000")
 
-LASER = '''<svg xmlns="http://www.w3.org/2000/svg" width="480" height="12" viewBox="0 0 480 12">
-<rect x="0" y="2" width="480" height="8" fill="#ff3030" opacity="0.35"/>
-<rect x="0" y="5" width="480" height="2" fill="#ff2020"/>
-<rect x="0" y="0" width="480" height="1.5" fill="#ff6060"/>
-<rect x="0" y="10.5" width="480" height="1.5" fill="#ff6060"/>
+
+def steal_button_svg(ready):
+    """A big shiny STEAL button (ready) or a grey WAIT button (cooling down)."""
+    if ready:
+        top, bottom, rim1, rim2, glow, label, size = "#ff5a5a", "#b8001c", "#fff3a0", "#ffb800", "#ffd23f", "STEAL!", 32
+    else:
+        top, bottom, rim1, rim2, glow, label, size = "#9aa3ad", "#4a525c", "#e6e9ee", "#8a939e", "#b8c0ca", "WAIT...", 28
+    mask = ('<path d="M22 34 Q34 26 46 32 Q52 28 58 32 Q70 26 82 34 Q80 48 66 48 Q58 48 55 40 L49 40 Q46 48 38 48 '
+            'Q24 48 22 34 Z" fill="#111" transform="translate(-6 0)"/>'
+            '<ellipse cx="33" cy="38" rx="5" ry="3.5" fill="#fff"/><ellipse cx="60" cy="38" rx="5" ry="3.5" fill="#fff"/>'
+            if ready else
+            '<circle cx="44" cy="38" r="15" fill="#fff" stroke="#4a525c" stroke-width="3"/>'
+            '<path d="M44 29 V38 L51 42" fill="none" stroke="#4a525c" stroke-width="3" stroke-linecap="round"/>')
+    sparks = (SPARK.format(x=196, y=6, c="#fff") + SPARK.format(x=18, y=58, c="#fff")) if ready else ""
+    return f'''<svg xmlns="http://www.w3.org/2000/svg" width="220" height="80" viewBox="0 0 220 80">
+<defs>
+<linearGradient id="face" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="{top}"/><stop offset="1" stop-color="{bottom}"/></linearGradient>
+<linearGradient id="rim" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="{rim1}"/><stop offset="1" stop-color="{rim2}"/></linearGradient>
+</defs>
+<rect x="1" y="1" width="218" height="78" rx="39" fill="{glow}" opacity="0.25"/>
+<rect x="5" y="5" width="210" height="70" rx="35" fill="{glow}" opacity="0.35"/>
+<rect x="10" y="12" width="200" height="60" rx="30" fill="#000" opacity="0.3"/>
+<rect x="10" y="8" width="200" height="60" rx="30" fill="url(#rim)"/>
+<rect x="16" y="13" width="188" height="50" rx="25" fill="url(#face)"/>
+<rect x="26" y="15" width="168" height="18" rx="9" fill="#fff" opacity="0.28"/>
+{mask}
+<text x="134" y="52" font-family="Marker" font-size="{size}" fill="#000" opacity="0.35" text-anchor="middle">{label}</text>
+<text x="132" y="49" font-family="Marker" font-size="{size}" fill="#fff" text-anchor="middle">{label}</text>
+{sparks}
 </svg>'''
 
 
-def lock_svg(fill, edge, closed):
-    shackle = "M11 15 V10 Q11 4 17 4 Q23 4 23 10 V15" if closed else "M11 15 V10 Q11 4 17 4 Q23 4 23 10 V8"
-    return f'''<svg xmlns="http://www.w3.org/2000/svg" width="34" height="34" viewBox="0 0 34 34">
-<circle cx="17" cy="17" r="16" fill="{fill}" stroke="{edge}" stroke-width="2"/>
-<path d="{shackle}" fill="none" stroke="#fff" stroke-width="3"/>
-<rect x="8" y="15" width="18" height="13" rx="3" fill="#fff"/>
-<circle cx="17" cy="21" r="2" fill="{edge}"/>
-</svg>'''
-
-
-LOCK_OPEN = lock_svg("#2fb84a", "#1a7a2e", closed=False)
-LOCK_CLOSED = lock_svg("#e03a3a", "#8a1a1a", closed=True)
+STEAL_READY = steal_button_svg(True)
+STEAL_WAIT = steal_button_svg(False)
 
 
 def slot_x(i):
@@ -137,22 +150,31 @@ def slot_x(i):
     return -230 + i * 55
 
 
-MY_Y, RIVAL_Y = -118, 108
+MY_Y = -118
+
+
+def house(x, roof, wall):
+    return (f'<rect x="{x - 22}" y="70" width="44" height="40" fill="{wall}" stroke="#333" stroke-width="1.5"/>'
+            f'<path d="M{x - 28} 72 L{x} 46 L{x + 28} 72 Z" fill="{roof}" stroke="#333" stroke-width="1.5"/>'
+            f'<rect x="{x - 7}" y="92" width="14" height="18" fill="#6b3a10"/>'
+            f'<rect x="{x - 18}" y="78" width="9" height="9" fill="#bfe8ff"/><rect x="{x + 9}" y="78" width="9" height="9" fill="#bfe8ff"/>')
 
 
 def backdrop():
-    pads = []
-    for i in range(1, 9):
-        cx = 240 + slot_x(i)
-        pads.append(f'<ellipse cx="{cx}" cy="{180 - MY_Y + 22}" rx="24" ry="7" fill="#8fb6e8" stroke="#2f7fd6" stroke-width="2"/>')
-        pads.append(f'<ellipse cx="{cx}" cy="{180 - RIVAL_Y + 22}" rx="24" ry="7" fill="#e8a0a0" stroke="#d63a3a" stroke-width="2"/>')
+    """Home: Gobo Town at the top (with the STEAL button), the carpet, and your base."""
+    pads = "".join(f'<ellipse cx="{240 + slot_x(i)}" cy="{180 - MY_Y + 22}" rx="24" ry="7" fill="#8fb6e8" '
+                   f'stroke="#2f7fd6" stroke-width="2"/>' for i in range(1, 9))
     studs = "".join(f'<circle cx="{x}" cy="{y}" r="2.2" fill="#ffd23f"/>'
                     for x in range(20, 480, 30) for y in (144, 196))
     return f'''<svg xmlns="http://www.w3.org/2000/svg" width="480" height="360" viewBox="0 0 480 360">
 <rect width="480" height="360" fill="#7ccf5a"/>
+<rect x="0" y="0" width="480" height="126" fill="#9ed8ff"/>
+<circle cx="440" cy="52" r="16" fill="#ffe066"/>
+<rect x="0" y="108" width="480" height="20" fill="#6cbf4a"/>
+{house(45, "#7a4bd6", "#e6d6ff")}{house(105, "#1aa38a", "#d0fff4")}{house(375, "#d9731a", "#ffe2c4")}{house(435, "#d63a3a", "#ffd6d6")}
 <rect x="0" y="0" width="480" height="30" fill="#2d3748" opacity="0.35"/>
-<rect x="3" y="32" width="474" height="94" rx="10" fill="#ffd6d6" stroke="#d63a3a" stroke-width="4"/>
-<text x="470" y="48" font-family="Sans Serif" font-size="12" font-weight="bold" fill="#b02a2a" text-anchor="end">RIVAL BASE</text>
+<text x="75" y="124" font-family="Sans Serif" font-size="10" font-weight="bold" fill="#1d4a1d" text-anchor="middle">OTHER PLAYERS' BASES</text>
+<text x="405" y="124" font-family="Sans Serif" font-size="10" font-weight="bold" fill="#1d4a1d" text-anchor="middle">OTHER PLAYERS' BASES</text>
 <rect x="0" y="140" width="480" height="60" fill="#c8202a"/>
 <rect x="0" y="140" width="480" height="4" fill="#ffd23f"/>
 <rect x="0" y="196" width="480" height="4" fill="#ffd23f"/>
@@ -162,8 +184,42 @@ def backdrop():
 <text x="240" y="176" font-family="Sans Serif" font-size="13" font-weight="bold" fill="#ffd23f" text-anchor="middle" opacity="0.8">GOBO CARPET</text>
 <rect x="3" y="258" width="474" height="99" rx="10" fill="#d6ecff" stroke="#2f7fd6" stroke-width="4"/>
 <text x="470" y="352" font-family="Sans Serif" font-size="12" font-weight="bold" fill="#1f5fae" text-anchor="end">YOUR BASE</text>
-{"".join(pads)}
+{pads}
 </svg>'''
+
+
+def raid_x(i):
+    return -165 + ((i - 1) % 4) * 110
+
+
+def raid_y(i):
+    return 60 - ((i - 1) // 4) * 100
+
+
+def raid_backdrop(owner, floor, edge, ground):
+    """Another player's base, full screen. Gobos stand on the 8 podiums."""
+    pads = "".join(f'<ellipse cx="{240 + raid_x(i)}" cy="{180 - raid_y(i) + 22}" rx="30" ry="9" fill="{edge}" '
+                   f'opacity="0.55"/>' for i in range(1, 9))
+    tiles = "".join(f'<rect x="{x}" y="{y}" width="40" height="40" fill="#fff" opacity="0.18"/>'
+                    for x in range(40, 440, 80) for y in (62, 142, 222))
+    return f'''<svg xmlns="http://www.w3.org/2000/svg" width="480" height="360" viewBox="0 0 480 360">
+<rect width="480" height="360" fill="{ground}"/>
+<rect x="0" y="0" width="480" height="30" fill="#2d3748" opacity="0.35"/>
+<rect x="24" y="40" width="432" height="262" rx="18" fill="{floor}" stroke="{edge}" stroke-width="8"/>
+{tiles}
+<rect x="190" y="292" width="100" height="20" fill="{floor}"/>
+<rect x="200" y="300" width="80" height="50" rx="6" fill="#a0522d" opacity="0.8"/>
+<rect x="150" y="30" width="180" height="30" rx="15" fill="{edge}"/>
+<text x="240" y="52" font-family="Sans Serif" font-size="17" font-weight="bold" fill="#fff" text-anchor="middle">{owner}'S BASE</text>
+{pads}
+<text x="240" y="340" font-family="Sans Serif" font-size="12" font-weight="bold" fill="#fff" text-anchor="middle">Steal ONE Gobo: touch it and press E!</text>
+</svg>'''
+
+
+RAID_BASES = [("BOB", "#e6d6ff", "#7a4bd6", "#4b3a6b"),
+              ("ZARA", "#d0fff4", "#1aa38a", "#2a5a52"),
+              ("MAX", "#ffe2c4", "#d9731a", "#6b4a2a"),
+              ("LUNA", "#ffe0f0", "#d63a8a", "#5a2a45")]
 
 
 def card(title, title_color, lines):
@@ -188,9 +244,9 @@ TITLE_CARD = card("STEAL A GOBO!", "#e0600a", [
     ("Walk: Arrow keys or W A S D", 15, "#333"),
     ("Buy a Gobo on the red carpet: touch it + press E", 15, "#333"),
     ("Gobos in YOUR BASE make money every second", 15, "#333"),
-    ("Steal from the RIVAL BASE: press E, then run home!", 15, "#b02a2a"),
-    ("The Rival steals too! Touch him to get it back", 15, "#b02a2a"),
-    ("Step on the LOCK button to lock your base", 15, "#1f5fae"),
+    ("Click the STEAL button to sneak into a player's base!", 15, "#b02a2a"),
+    ("Steal ONE Gobo (touch it + E), then you go back home", 15, "#b02a2a"),
+    ("You can steal once every 1 minute and 30 seconds", 15, "#1f5fae"),
     ("X = sell  •  U = faster shoes  •  R = rebirth", 15, "#1f5fae"),
     ("Press SPACE to start", 22, "#e0600a"),
 ])
@@ -222,9 +278,8 @@ def tone_wav(parts, rate=22050):
 
 POP = tone_wav([(400, 1200, 0.12, "sine")])
 CASH = tone_wav([(988, 988, 0.09, "sine"), (1319, 1319, 0.25, "sine")])
-ALARM = tone_wav([(700, 500, 0.18, "square"), (700, 500, 0.18, "square")])
 OUCH = tone_wav([(500, 150, 0.45, "square")])
-LOCK = tone_wav([(300, 300, 0.08, "square"), (600, 600, 0.15, "square")])
+WHOOSH = tone_wav([(200, 1400, 0.35, "sine")])
 
 # ---------------------------------------------------------------- block DSL
 
@@ -252,6 +307,7 @@ class BC:
 
 MENUS = {
     ("sensing_touchingobject", "TOUCHINGOBJECTMENU"): ("sensing_touchingobjectmenu", "TOUCHINGOBJECTMENU"),
+    ("looks_switchbackdropto", "BACKDROP"): ("looks_backdrops", "BACKDROP"),
     ("sensing_keypressed", "KEY_OPTION"): ("sensing_keyoptions", "KEY_OPTION"),
     ("sensing_distanceto", "DISTANCETOMENU"): ("sensing_distancetomenu", "DISTANCETOMENU"),
     ("motion_pointtowards", "TOWARDS"): ("motion_pointtowards_menu", "TOWARDS"),
@@ -264,12 +320,11 @@ TEXT_INPUTS = {"OPERAND1", "OPERAND2", "STRING1", "STRING2", "MESSAGE", "ITEM"}
 STOP_MUTATION = {"tagName": "mutation", "children": [], "hasnext": "false"}
 
 GLOBAL_VARS = ["Money", "Income", "Rebirths", "Multiplier", "Rebirth Cost", "Speed", "Upgrade Cost",
-               "Carrying", "Rival Carry", "Rival Result", "Rival New Slot", "My Lock", "Rival Lock",
-               "Steal Timer", "Rival Lock Timer", "Tip"]
-LISTS = {"My Slots": [0] * 8, "Rival Slots": [0] * 8,
+               "Scene", "Steal Cooldown", "Raid Time", "Home X", "Home Y", "Tip"]
+LISTS = {"My Slots": [0] * 8,
          "Names": [g[0] for g in GOBOS], "Tiers": [g[1] for g in GOBOS],
          "Prices": [g[2] for g in GOBOS], "Rates": [g[3] for g in GOBOS], "Chances": CUMULATIVE}
-BROADCASTS = ["title", "start", "caught", "tip"]
+BROADCASTS = ["title", "start", "tip", "raid start", "raid end"]
 
 
 def vid(name):
@@ -421,6 +476,10 @@ def rot_style(s):           return B("motion_setrotationstyle", fields={"STYLE":
 def say(m):                 return B("looks_say", MESSAGE=m)
 def say_for(m, s):          return B("looks_sayforsecs", MESSAGE=m, SECS=s)
 def costume(c):             return B("looks_switchcostumeto", COSTUME=c)
+def switch_backdrop(b):     return B("looks_switchbackdropto", BACKDROP=b)
+def show_var(n):            return B("data_showvariable", fields={"VARIABLE": n})
+def hide_var(n):            return B("data_hidevariable", fields={"VARIABLE": n})
+def when_clicked():         return B("event_whenthisspriteclicked")
 def show():                 return B("looks_show")
 def hide():                 return B("looks_hide")
 def size(n):                return B("looks_setsizeto", SIZE=n)
@@ -457,36 +516,83 @@ BOB = round_(mul(3, mathop("sin", add(mul(timer(), 300), mul(V("slot"), 45)))))
 SLOT_X = add(-230, mul(V("slot"), 55))
 HOME_X, HOME_Y = 0, -160      # player start, inside YOUR BASE
 SAFE_Y = -80                  # the player is home once below this line
-RIVAL_HOME = (0, 146)
 
 # ---------------------------------------------------------------- Stage
+
+STEAL_COOLDOWN = 90   # seconds between steals (1 minute 30 seconds)
+RAID_SECONDS = 20     # time you have inside another player's base
 
 stage = Compiler("stage")
 init = [set_var("Money", 50), set_var("Income", 0), set_var("Rebirths", 0), set_var("Multiplier", 1),
         set_var("Rebirth Cost", 20000), set_var("Speed", 4), set_var("Upgrade Cost", 200),
-        set_var("Carrying", 0), set_var("Rival Carry", 0), set_var("Rival Result", 0),
-        set_var("Rival New Slot", 0), set_var("My Lock", 0), set_var("Rival Lock", 0),
-        set_var("Steal Timer", 40), set_var("Rival Lock Timer", 45), set_var("Tip", ""),
-        clear_list("My Slots"), clear_list("Rival Slots")]
-init += [add_to("My Slots", 0) for _ in range(8)] + [add_to("Rival Slots", 0) for _ in range(8)]
+        set_var("Scene", 1), set_var("Steal Cooldown", 0), set_var("Raid Time", 0), set_var("Tip", ""),
+        clear_list("My Slots")] + [add_to("My Slots", 0) for _ in range(8)]
 income = [set_var("Income", 0)] + [
     if_(gt(item("My Slots", i), 0), [change_var("Income", item("Rates", item("My Slots", i)))])
     for i in range(1, 9)] + [set_var("Income", mul(V("Income"), V("Multiplier")))]
 stage.script([
-    flag(), *init,
+    flag(), *init, switch_backdrop("Gobo Land"), hide_var("Raid Time"),
     broadcast_wait("title"),
     broadcast("start"),
     forever([
         wait(1),
         *income,
         change_var("Money", V("Income")),
-        if_(gt(V("My Lock"), 0), [change_var("My Lock", -1)]),
-        if_(gt(V("Rival Lock"), 0), [change_var("Rival Lock", -1)]),
-        if_(gt(V("Steal Timer"), 0), [change_var("Steal Timer", -1)]),
-        change_var("Rival Lock Timer", -1),
-        if_(lt(V("Rival Lock Timer"), 1), [set_var("Rival Lock", 12), set_var("Rival Lock Timer", rand(40, 70))]),
+        if_(gt(V("Steal Cooldown"), 0), [change_var("Steal Cooldown", -1)]),
+        if_(eq(V("Scene"), 2), [
+            change_var("Raid Time", -1),
+            if_(lt(V("Raid Time"), 1), [*tip("Too slow! You went home with nothing."), broadcast("raid end")]),
+        ]),
     ]),
 ], 20, 20)
+stage.script([
+    when_msg("raid start"),
+    switch_backdrop(rand(2, 1 + len(RAID_BASES))),
+    show_var("Raid Time"),
+], 20, 600)
+stage.script([
+    when_msg("raid end"),
+    set_var("Scene", 1),
+    switch_backdrop("Gobo Land"),
+    hide_var("Raid Time"),
+], 20, 750)
+
+# ---------------------------------------------------------------- STEAL button
+
+button = Compiler("button", local_vars=["found"])
+button.script([flag(), goto_xy(0, 100), costume("ready"), size(100), front(), say(""), show()], 20, 20)
+button.script([
+    when_msg("start"),
+    forever([
+        if_else(eq(V("Scene"), 2), [hide()], [
+            show(),
+            if_else(gt(V("Steal Cooldown"), 0),
+                    [costume("wait"), size(90), say(join("Ready in ", V("Steal Cooldown"), "s"))],
+                    [costume("ready"), say(""),
+                     if_else(touching("_mouse_"),
+                             [size(112)],
+                             [size(add(100, mul(5, mathop("sin", mul(timer(), 400)))))])]),
+        ]),
+    ]),
+], 20, 160)
+button.script([
+    when_clicked(),
+    if_(eq(V("Scene"), 1), [
+        if_else(gt(V("Steal Cooldown"), 0),
+                tip("You can steal again in ", V("Steal Cooldown"), " seconds!"),
+                [*find_free("My Slots"),
+                 if_else(eq(V("found"), 0),
+                         tip("Your base is full! Sell a Gobo (X) first."),
+                         [set_var("Scene", 2),
+                          set_var("Steal Cooldown", STEAL_COOLDOWN),
+                          set_var("Raid Time", RAID_SECONDS),
+                          set_var("Home X", prop_of("x position", "Player")),
+                          set_var("Home Y", prop_of("y position", "Player")),
+                          play("whoosh"),
+                          broadcast("raid start"),
+                          *tip("Steal ONE Gobo! Touch it and press E. Hurry!")])]),
+    ]),
+], 480, 20)
 
 # ---------------------------------------------------------------- Player
 
@@ -497,25 +603,18 @@ player.script([
 player.script([
     when_msg("start"),
     forever([
-        if_else(gt(V("Carrying"), 0), [set_var("step", mul(V("Speed"), 0.75))], [set_var("step", V("Speed"))]),
+        set_var("step", V("Speed")),
         if_(any_key("right arrow", "d"), [point_dir(90), change_x(V("step"))]),
         if_(any_key("left arrow", "a"), [point_dir(-90), change_x(sub(0, V("step")))]),
         if_(any_key("up arrow", "w"), [change_y(V("step"))]),
         if_(any_key("down arrow", "s"), [change_y(sub(0, V("step")))]),
-        # The Rival's lasers push you out while his base is locked.
-        if_else(gt(V("Rival Lock"), 0),
-                [if_(gt(y_pos(), 50), [set_y(50)])],
-                [if_(gt(y_pos(), 148), [set_y(148)])]),
+        if_(gt(y_pos(), 148), [set_y(148)]),
         if_(lt(y_pos(), -160), [set_y(-160)]),
     ]),
 ], 20, 200)
 player.script([when_msg("tip"), say_for(V("Tip"), 2)], 480, 20)
-player.script([
-    when_msg("caught"),
-    play("ouch"),
-    goto_xy(HOME_X, HOME_Y),
-    say_for("Caught! The Rival took his Gobo back.", 2),
-], 480, 120)
+player.script([when_msg("raid start"), goto_xy(0, -112), point_dir(90), front()], 480, 120)
+player.script([when_msg("raid end"), goto_xy(V("Home X"), V("Home Y")), front()], 480, 200)
 player.script([
     when_key("u"),
     if_else(lt(V("Money"), V("Upgrade Cost")),
@@ -524,10 +623,10 @@ player.script([
              change_var("Speed", 0.5),
              set_var("Upgrade Cost", mul(V("Upgrade Cost"), 3)),
              *tip("Zoom! Your speed is now ", V("Speed"))]),
-], 480, 260)
+], 480, 300)
 player.script([
     when_key("r"),
-    if_else(or_(lt(V("Money"), V("Rebirth Cost")), gt(V("Carrying"), 0)),
+    if_else(or_(lt(V("Money"), V("Rebirth Cost")), eq(V("Scene"), 2)),
             tip("Rebirth costs $", V("Rebirth Cost"), ". It resets your Gobos but you earn more!"),
             [set_var("Money", 0),
              *[replace("My Slots", i, 0) for i in range(1, 9)],
@@ -535,65 +634,79 @@ player.script([
              set_var("Multiplier", add(1, mul(V("Rebirths"), 0.5))),
              set_var("Rebirth Cost", mul(20000, mul(add(V("Rebirths"), 1), add(V("Rebirths"), 1)))),
              *tip("REBIRTH! Now your Gobos make x", V("Multiplier"), " money!")]),
-], 480, 480)
+], 480, 520)
 
 # ---------------------------------------------------------------- Gobo (all Gobos are clones)
-# kind: 1 = on the carpet, 2 = in my base, 3 = in the Rival's base,
-#       4 = carried by me, 5 = carried by the Rival
+# kind: 1 = on the carpet, 2 = in my base, 6 = in another player's base (can be stolen)
 
 pick_rarity = [set_var("r", rand(1, 1000)), set_var("rarity", 1)] + [
     if_(gt(V("r"), item("Chances", k)), [set_var("rarity", k + 1)]) for k in range(1, 7)]
 E = any_key("e", "space")
 
-gobo = Compiler("gobo", local_vars=["kind", "rarity", "slot", "found", "r", "rolled"])
-gobo.script([flag(), hide(), set_var("kind", 0)], 20, 20)
+gobo = Compiler("gobo", local_vars=["kind", "rarity", "slot", "found", "r", "orig"])
+gobo.script([flag(), hide(), set_var("kind", 0), set_var("orig", 1)], 20, 20)
 gobo.script([
     when_msg("start"),
-    # The Rival starts with a few Gobos.
-    set_var("kind", 3),
-    *[[set_var("slot", i), set_var("rarity", r), replace("Rival Slots", i, r), clone_me()]
-      for i, r in ((2, 1), (4, 2), (6, 1), (7, 3))],
-    forever([set_var("kind", 1), clone_me(), wait(rand(1.5, 3))]),
+    forever([wait_until(eq(V("Scene"), 1)), set_var("kind", 1), clone_me(), wait(rand(1.5, 3))]),
 ], 20, 140)
+gobo.script([
+    # Fill the other player's base with random Gobos.
+    when_msg("raid start"),
+    if_(eq(V("orig"), 1), [
+        set_var("kind", 6),
+        *[[set_var("slot", i), *pick_rarity, clone_me()] for i in range(1, 9)],
+    ]),
+], 20, 260)
+gobo.script([when_msg("raid end"), if_(eq(V("kind"), 6), [delete_clone()])], 20, 700)
 
 carpet = [
     *pick_rarity,
-    costume(V("rarity")), size(60), goto_xy(-225, 12), back(), show(),
-    if_(gt(V("rarity"), 4), [*tip("WOW! A ", TIER, " ", NAME, " is on the carpet!"), play("alarm")]),
-    set_var("rolled", 0),
+    costume(V("rarity")), size(60), goto_xy(-225, 12), back(),
+    if_(gt(V("rarity"), 4), [*tip("WOW! A ", TIER, " ", NAME, " is on the carpet!"), play("cash")]),
     repeat_until(or_(gt(x_pos(), 232), not_(eq(V("kind"), 1))), [
-        change_x(1.2),
-        set_y(add(12, BOB)),
-        if_else(lt(distance_to("Player"), 45),
-                [say(join(NAME, " (", TIER, ") $", PRICE, " = $", RATE, "/s"))],
-                [say(join("$", PRICE))]),
-        if_(and_(touching("Player"), E, eq(V("Carrying"), 0)), [
-            if_else(lt(V("Money"), PRICE),
-                    tip("You need $", PRICE, " to buy this ", NAME),
-                    [*find_free("My Slots"),
-                     if_else(eq(V("found"), 0),
-                             tip("Your base is full! Stand on a Gobo and press X to sell it."),
-                             [change_var("Money", sub(0, PRICE)),
-                              replace("My Slots", V("found"), V("rarity")),
-                              set_var("slot", V("found")), set_var("kind", 2),
-                              play("cash"), *tip("You bought a ", NAME, "!")])]),
-        ]),
-        # Near the end of the carpet the Rival may buy it.
-        if_(and_(eq(V("rolled"), 0), gt(x_pos(), 150), eq(V("kind"), 1)), [
-            set_var("rolled", 1),
-            # He keeps one slot free so he can still steal from you.
-            set_var("r", 0),
-            *[if_(eq(item("Rival Slots", i), 0), [change_var("r", 1)]) for i in range(1, 9)],
-            if_(and_(gt(V("r"), 1), or_(gt(V("rarity"), 2), lt(rand(1, 10), 3))), [
-                *find_free("Rival Slots"),
-                if_(gt(V("found"), 0), [
-                    replace("Rival Slots", V("found"), V("rarity")),
-                    set_var("slot", V("found")), set_var("kind", 3),
-                ]),
+        if_else(eq(V("Scene"), 2), [hide()], [
+            show(),
+            change_x(1.2),
+            set_y(add(12, BOB)),
+            if_else(lt(distance_to("Player"), 45),
+                    [say(join(NAME, " (", TIER, ") $", PRICE, " = $", RATE, "/s"))],
+                    [say(join("$", PRICE))]),
+            if_(and_(touching("Player"), E), [
+                if_else(lt(V("Money"), PRICE),
+                        tip("You need $", PRICE, " to buy this ", NAME),
+                        [*find_free("My Slots"),
+                         if_else(eq(V("found"), 0),
+                                 tip("Your base is full! Stand on a Gobo and press X to sell it."),
+                                 [change_var("Money", sub(0, PRICE)),
+                                  replace("My Slots", V("found"), V("rarity")),
+                                  set_var("slot", V("found")), set_var("kind", 2),
+                                  play("cash"), *tip("You bought a ", NAME, "!")])]),
             ]),
         ]),
     ]),
     if_(eq(V("kind"), 1), [delete_clone()]),
+]
+
+RAID_X = add(-165, mul(B("operator_mod", NUM1=sub(V("slot"), 1), NUM2=4), 110))
+RAID_Y = sub(60, mul(mathop("floor", div(sub(V("slot"), 1), 4)), 100))
+raid = [
+    costume(V("rarity")), size(60), show(),
+    if_(gt(V("rarity"), 4), [*tip("WOW! This base has a ", TIER, " ", NAME, "!")]),
+    repeat_until(not_(eq(V("kind"), 6)), [
+        goto_xy(RAID_X, add(RAID_Y, BOB)),
+        if_else(lt(distance_to("Player"), 45),
+                [say(join(NAME, " (", TIER, ") $", RATE, "/s  E = steal"))],
+                [say("")]),
+        if_(and_(touching("Player"), E, eq(V("Scene"), 2)), [
+            *find_free("My Slots"),
+            if_(gt(V("found"), 0), [
+                replace("My Slots", V("found"), V("rarity")),
+                set_var("slot", V("found")), set_var("kind", 2),
+                play("cash"), *tip("You stole a ", NAME, "!"),
+                broadcast("raid end"),
+            ]),
+        ]),
+    ]),
 ]
 
 mine = [  # kind 2: sitting in my base, making money
@@ -601,187 +714,23 @@ mine = [  # kind 2: sitting in my base, making money
     if_(not_(eq(item("My Slots", V("slot")), V("rarity"))), [delete_clone()]),
     if_else(lt(distance_to("Player"), 40),
             [say(join(NAME, " $", RATE, "/s  (X = sell)"))], [say("")]),
-    if_(and_(touching("Player"), key("x"), eq(V("Carrying"), 0)), [
+    if_(and_(touching("Player"), key("x")), [
         change_var("Money", round_(div(PRICE, 2))),
         replace("My Slots", V("slot"), 0),
         *tip("Sold ", NAME, " for $", round_(div(PRICE, 2))),
         delete_clone(),
     ]),
-    if_(eq(V("Rival Carry"), V("slot")), [set_var("kind", 5), say(""), front()]),
-]
-
-rivals = [  # kind 3: sitting in the Rival's base
-    goto_xy(SLOT_X, add(RIVAL_Y, BOB)),
-    if_(not_(eq(item("Rival Slots", V("slot")), V("rarity"))), [delete_clone()]),
-    if_else(lt(distance_to("Player"), 40),
-            [say(join(NAME, " $", RATE, "/s  (E = steal)"))], [say("")]),
-    if_(and_(touching("Player"), E, eq(V("Carrying"), 0)), [
-        if_else(gt(V("Rival Lock"), 0),
-                tip("The Rival Base is locked! Wait for the lasers to go away."),
-                [*find_free("My Slots"),
-                 if_else(eq(V("found"), 0),
-                         tip("Your base is full! Sell a Gobo first (X)."),
-                         [set_var("Carrying", V("rarity")), set_var("kind", 4),
-                          say(""), play("pop"), front()])]),
-    ]),
-]
-
-carried = [  # kind 4: I am running home with it
-    goto_xy(prop_of("x position", "Player"), add(prop_of("y position", "Player"), 34)),
-    if_else(eq(V("Carrying"), 0),
-            [set_var("kind", 3), back()],  # caught: it goes back
-            [if_(lt(prop_of("y position", "Player"), SAFE_Y), [
-                *find_free("My Slots"),
-                if_(gt(V("found"), 0), [
-                    replace("My Slots", V("found"), V("rarity")),
-                    replace("Rival Slots", V("slot"), 0),
-                    set_var("slot", V("found")), set_var("kind", 2), set_var("Carrying", 0),
-                    back(), play("cash"), *tip("You stole a ", NAME, "!"),
-                ]),
-            ])]),
-]
-
-rival_carried = [  # kind 5: the Rival is running away with it
-    if_else(eq(V("Rival Carry"), V("slot")),
-            [goto_xy(prop_of("x position", "Rival"), add(prop_of("y position", "Rival"), 34))],
-            [back(),
-             if_else(eq(V("Rival Result"), 1),
-                     [set_var("slot", V("Rival New Slot")), set_var("kind", 3)],
-                     [set_var("kind", 2)])]),
 ]
 
 gobo.script([
     when_cloned(),
+    set_var("orig", 0),
     if_(eq(V("kind"), 1), carpet),
-    say(""), costume(V("rarity")), size(60), show(),
-    if_else(eq(V("kind"), 2), [glide(0.5, SLOT_X, MY_Y)], [glide(0.5, SLOT_X, RIVAL_Y)]),
-    forever([
-        if_(eq(V("kind"), 2), mine),
-        if_(eq(V("kind"), 3), rivals),
-        if_(eq(V("kind"), 4), carried),
-        if_(eq(V("kind"), 5), rival_carried),
-    ]),
+    if_(eq(V("kind"), 6), raid),
+    say(""), costume(V("rarity")), size(60), show(), back(),
+    glide(0.5, SLOT_X, MY_Y),
+    forever([if_else(eq(V("Scene"), 2), [hide(), say("")], [show(), *mine])]),
 ], 380, 20)
-
-# ---------------------------------------------------------------- Rival
-# mode: 0 = at home (guards, chases thieves), 1 = walking to steal, 2 = running away with
-#       my Gobo, 3 = walking home
-
-rival = Compiler("rival", local_vars=["mode", "tx", "ty", "dx", "dy", "dist", "spd", "patrol", "target",
-                                      "best", "found", "alerted"])
-walk = [  # walk toward (tx, ty) at speed spd
-    set_var("dx", sub(V("tx"), x_pos())),
-    set_var("dy", sub(V("ty"), y_pos())),
-    set_var("dist", mathop("sqrt", add(mul(V("dx"), V("dx")), mul(V("dy"), V("dy"))))),
-    if_else(gt(V("dist"), V("spd")),
-            [change_x(div(mul(V("dx"), V("spd")), V("dist"))),
-             change_y(div(mul(V("dy"), V("spd")), V("dist")))],
-            [goto_xy(V("tx"), V("ty"))]),
-    if_(gt(V("dx"), 0.5), [point_dir(90)]),
-    if_(lt(V("dx"), -0.5), [point_dir(-90)]),
-]
-pick_target = [set_var("best", 0), set_var("target", 0)] + [
-    if_(gt(item("My Slots", i), V("best")), [set_var("best", item("My Slots", i)), set_var("target", i)])
-    for i in range(1, 9)]
-go_home = lambda *extra: [set_var("mode", 3), set_var("alerted", 0), *extra]
-
-rival.script([
-    flag(), rot_style("left-right"), point_dir(-90), goto_xy(*RIVAL_HOME), show(), say(""),
-    set_var("mode", 0), set_var("patrol", 0), set_var("alerted", 0),
-], 20, 20)
-rival.script([
-    when_msg("start"),
-    forever([
-        if_(eq(V("mode"), 0), [
-            if_else(and_(gt(V("Carrying"), 0), gt(prop_of("y position", "Player"), SAFE_Y)),
-                    [if_(eq(V("alerted"), 0), [
-                        say("HEY! That's MY Gobo!"), play("alarm"), set_var("alerted", 1), wait(0.5)]),
-                     set_var("tx", prop_of("x position", "Player")),
-                     set_var("ty", prop_of("y position", "Player")),
-                     set_var("spd", 3.6)],
-                    [if_(eq(V("alerted"), 1), [set_var("alerted", 0), say("")]),
-                     set_var("tx", V("patrol")), set_var("ty", RIVAL_HOME[1]), set_var("spd", 1.3),
-                     if_(lt(mathop("abs", sub(x_pos(), V("patrol"))), 4), [set_var("patrol", rand(-200, 200))]),
-                     if_(and_(lt(V("Steal Timer"), 1), eq(V("Carrying"), 0), eq(V("My Lock"), 0)), [
-                         *pick_target, *find_free("Rival Slots"),
-                         if_else(and_(gt(V("target"), 0), gt(V("found"), 0)),
-                                 [set_var("mode", 1), say("I'm going to steal your Gobo!")],
-                                 [set_var("Steal Timer", 10)]),
-                     ])]),
-            *walk,
-            if_(and_(gt(V("Carrying"), 0), touching("Player")), [
-                set_var("Carrying", 0), say("Got you!"), broadcast("caught"), *go_home(),
-            ]),
-        ]),
-        if_(eq(V("mode"), 1), [
-            set_var("tx", add(-230, mul(V("target"), 55))), set_var("ty", -96), set_var("spd", 2.4),
-            *walk,
-            if_(and_(gt(V("My Lock"), 0), lt(y_pos(), -55)),
-                go_home(say("Your base is locked! Grrr!"), set_var("Steal Timer", rand(20, 35)))),
-            if_(eq(item("My Slots", V("target")), 0), go_home(say(""), set_var("Steal Timer", 15))),
-            if_(touching("Player"),
-                go_home(say("Eek! You caught me!"), set_var("Steal Timer", rand(25, 40)))),
-            if_(and_(eq(V("mode"), 1), lt(V("dist"), 4)), [
-                set_var("best", item("My Slots", V("target"))),
-                set_var("Rival Result", 0), set_var("Rival Carry", V("target")),
-                set_var("mode", 2), say("Hehe! Got one!"), play("alarm"),
-                *tip("The Rival is stealing your ", item("Names", V("best")), "! Touch him!"),
-            ]),
-        ]),
-        if_(eq(V("mode"), 2), [
-            set_var("tx", RIVAL_HOME[0]), set_var("ty", RIVAL_HOME[1]), set_var("spd", 2),
-            *walk,
-            if_else(touching("Player"),
-                    [set_var("Rival Result", 2), set_var("Rival Carry", 0), play("ouch"),
-                     *go_home(say("Nooo!"), set_var("Steal Timer", rand(25, 45))),
-                     *tip("You saved your Gobo!")],
-                    [if_(lt(V("dist"), 4), [
-                        *find_free("Rival Slots"),
-                        if_else(and_(gt(V("found"), 0), eq(item("My Slots", V("target")), V("best"))),
-                                [set_var("Rival New Slot", V("found")),
-                                 replace("Rival Slots", V("found"), V("best")),
-                                 replace("My Slots", V("target"), 0),
-                                 set_var("Rival Result", 1),
-                                 *tip("Oh no! The Rival stole your ", item("Names", V("best")), "!")],
-                                [set_var("Rival Result", 2)]),
-                        set_var("Rival Carry", 0),
-                        set_var("mode", 0), say(""), set_var("Steal Timer", rand(30, 50)),
-                    ])]),
-        ]),
-        if_(eq(V("mode"), 3), [
-            set_var("tx", RIVAL_HOME[0]), set_var("ty", RIVAL_HOME[1]), set_var("spd", 3),
-            *walk,
-            if_(lt(V("dist"), 4), [set_var("mode", 0), say("")]),
-        ]),
-    ]),
-], 20, 200)
-rival.script([when_msg("caught"), wait(1.5), say("")], 700, 20)
-
-# ---------------------------------------------------------------- Lock button and lasers
-
-lock = Compiler("lock")
-lock.script([flag(), goto_xy(-218, -100), costume("unlocked"), show(), say("")], 20, 20)
-lock.script([
-    when_msg("start"),
-    forever([
-        if_(and_(touching("Player"), eq(V("My Lock"), 0)), [
-            set_var("My Lock", 25), play("lock"), *tip("Your base is locked for 25 seconds!"),
-        ]),
-        if_else(gt(V("My Lock"), 0),
-                [costume("locked"), say(join(V("My Lock"), "s"))],
-                [costume("unlocked"), say("LOCK")]),
-    ]),
-], 20, 160)
-
-my_laser = Compiler("mylaser")
-my_laser.script([flag(), goto_xy(0, -71), hide()], 20, 20)
-my_laser.script([when_msg("start"), forever([
-    if_else(gt(V("My Lock"), 0), [show(), front()], [hide()])])], 20, 140)
-
-rival_laser = Compiler("rivallaser")
-rival_laser.script([flag(), goto_xy(0, 56), hide()], 20, 20)
-rival_laser.script([when_msg("start"), forever([
-    if_else(gt(V("Rival Lock"), 0), [show(), front()], [hide()])])], 20, 140)
 
 # ---------------------------------------------------------------- title card
 
@@ -827,26 +776,23 @@ def sprite(comp, name, costumes, sounds, layer, x=0, y=0, visible=True):
 
 
 START_VALUES = {"Money": 50, "Multiplier": 1, "Rebirth Cost": 20000, "Speed": 4, "Upgrade Cost": 200,
-                "Steal Timer": 40, "Rival Lock Timer": 45, "Tip": ""}
+                "Scene": 1, "Tip": ""}
 targets = [
     {"isStage": True, "name": "Stage",
      "variables": {vid(v): [v, START_VALUES.get(v, 0)] for v in GLOBAL_VARS},
      "lists": {lid(n): [n, vals] for n, vals in LISTS.items()},
      "broadcasts": {bid(b): b for b in BROADCASTS}, "blocks": stage.blocks,
      "comments": {}, "currentCostume": 0,
-     "costumes": [svg_costume("Gobo Land", backdrop(), 240, 180)],
+     "costumes": [svg_costume("Gobo Land", backdrop(), 240, 180)]
+                 + [svg_costume(f"{r[0].title()}'s Base", raid_backdrop(*r), 240, 180) for r in RAID_BASES],
      "sounds": [], "volume": 100, "layerOrder": 0, "tempo": 60, "videoTransparency": 50,
      "videoState": "on", "textToSpeechLanguage": None},
     sprite(gobo, "Gobo", [svg_costume(g[0], art) for g, art in zip(GOBOS, GOBO_ART)],
-           [wav_sound("pop", POP), wav_sound("cash", CASH), wav_sound("alarm", ALARM)], 1, visible=False),
-    sprite(lock, "Lock Button", [svg_costume("unlocked", LOCK_OPEN), svg_costume("locked", LOCK_CLOSED)],
-           [wav_sound("lock", LOCK)], 2, -218, -100),
-    sprite(my_laser, "My Lasers", [svg_costume("laser", LASER)], [], 3, 0, -71, visible=False),
-    sprite(rival_laser, "Rival Lasers", [svg_costume("laser", LASER)], [], 4, 0, 56, visible=False),
-    sprite(rival, "Rival", [svg_costume("Rival", RIVAL)], [wav_sound("alarm", ALARM), wav_sound("ouch", OUCH)],
-           5, *RIVAL_HOME),
-    sprite(player, "Player", [svg_costume("Player", PLAYER)], [wav_sound("ouch", OUCH)], 6, HOME_X, HOME_Y),
-    sprite(message, "Message", [svg_costume("title", TITLE_CARD, 240, 180)], [], 7, visible=False),
+           [wav_sound("pop", POP), wav_sound("cash", CASH)], 1, visible=False),
+    sprite(player, "Player", [svg_costume("Player", PLAYER)], [wav_sound("ouch", OUCH)], 2, HOME_X, HOME_Y),
+    sprite(button, "STEAL Button", [svg_costume("ready", STEAL_READY), svg_costume("wait", STEAL_WAIT)],
+           [wav_sound("whoosh", WHOOSH)], 3, 0, 100),
+    sprite(message, "Message", [svg_costume("title", TITLE_CARD, 240, 180)], [], 4, visible=False),
 ]
 
 
@@ -858,7 +804,8 @@ def monitor(name, x, y):
 
 project = {
     "targets": targets,
-    "monitors": [monitor("Money", 5, 3), monitor("Income", 140, 3), monitor("Rebirths", 270, 3)],
+    "monitors": [monitor("Money", 5, 3), monitor("Income", 140, 3), monitor("Rebirths", 270, 3),
+                 dict(monitor("Raid Time", 380, 3), visible=False)],
     "extensions": [],
     "meta": {"semver": "3.0.0", "vm": "0.2.0", "agent": "build_sb3.py"},
 }

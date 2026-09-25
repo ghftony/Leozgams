@@ -20,7 +20,8 @@ big STEAL button to sneak into another player's base and steal a Gobo.
 | X | Sell one of your Gobos (you get half the price back) |
 | U | Buy faster shoes |
 | R | Rebirth: start again with no Gobos, but every Gobo makes more money |
-| Mouse click | Press the STEAL button, the SKINS button, or a skin in the shop |
+| Mouse click | Press the STEAL, SKINS, PETS and INVENTORY buttons, and things in the shops |
+| X (mouse over a pet in INVENTORY) | Delete that pet |
 
 - Gobos walk along the **red carpet**. Touch one and press **E** to buy it. It goes to **Your Base**.
 - Every Gobo in your base makes money every second.
@@ -91,6 +92,25 @@ return to the game.
 | Alien | $600,000 |
 | Golden Thief | $1,000,000 |
 | Rainbow Legend | $2,500,000 |
+
+## Pets
+
+Click **PETS** (top left) to open the Pet Shop. Click a Lucky Block to buy it. It shakes, cracks and
+breaks open into a random pet. Each block has its own 4 pets: the first one comes 45% of the time,
+then 30%, 18%, and the best one only 7%.
+
+Click **INVENTORY** to see your pets (up to 20). Click a pet to equip it (up to 3). Equipped pets follow
+you around and give you a money boost: the numbers add up, so a +35% and a +50% pet give +85% money.
+The **Pet Boost** box at the top shows your total boost. Hold the mouse over a pet and press **X** to
+delete it.
+
+| Lucky Block | Price | Pets inside (worst to best) |
+| --- | --- | --- |
+| Wood Lucky Block | $500 | Puppy (+5%), Kitten (+5%), Bunny (+8%), Hamster (+10%) |
+| Iron Lucky Block | $5,000 | Fox (+15%), Owl (+18%), Penguin (+20%), Panda (+25%) |
+| Gold Lucky Block | $50,000 | Lion (+35%), Tiger (+40%), Unicorn (+50%), Phoenix (+60%) |
+| Diamond Lucky Block | $500,000 | Crystal Wolf (+80%), Ice Dragon (+100%), Robo Cat (+110%), Golden Eagle (+130%) |
+| Rainbow Lucky Block | $5,000,000 | Rainbow Unicorn (+200%), Galaxy Whale (+250%), Gobo King (+300%), Cosmic Dragon (+400%) |
 
 ## Animations
 

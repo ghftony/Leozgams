@@ -453,7 +453,8 @@ def flash_svg(label, ray1, ray2, text_color, sub=""):
 FLASHES = {"sneak": flash_svg("SNEAK ATTACK!", "#4b2a8a", "#6b3fd0", "#6b3fd0", "Steal ONE Gobo!"),
            "yoink": flash_svg("YOINK!", "#ff9a1f", "#ffd23f", "#e0202a", "Got it! Running home..."),
            "tooslow": flash_svg("TOO SLOW!", "#555", "#777", "#555", "You got nothing this time"),
-           "rebirth": flash_svg("REBIRTH!", "#1aa38a", "#5EC8FF", "#b36bff", "Your Gobos make more money now!")}
+           "rebirth": flash_svg("REBIRTH!", "#1aa38a", "#5EC8FF", "#b36bff", "Your Gobos make more money now!"),
+           "lucky": flash_svg("POP!", "#ff5ec8", "#ffd23f", "#ff5ec8", "What pet did you get?")}
 
 CLOUD = f'''<svg xmlns="http://www.w3.org/2000/svg" width="90" height="44" viewBox="0 0 90 44">
 <path d="M14 38 Q2 38 4 28 Q6 18 18 20 Q20 6 36 8 Q46 0 58 8 Q72 4 76 18 Q88 20 86 30 Q84 38 74 38 Z"
@@ -596,10 +597,265 @@ TITLE_CARD = card("STEAL A GOBO!", "#e0600a", [
     ("Gobos in YOUR BASE make money every second", 15, "#333"),
     ("Click the STEAL button to sneak into a player's base!", 15, "#b02a2a"),
     ("Steal ONE Gobo (touch it + E), then you go back home", 15, "#b02a2a"),
-    ("You can steal once every 1 minute and 30 seconds", 15, "#1f5fae"),
+    ("PETS: open Lucky Blocks, equip pets in INVENTORY", 15, "#1f5fae"),
     ("X = sell  •  U = faster shoes  •  R = rebirth", 15, "#1f5fae"),
     ("Press SPACE to start", 22, "#e0600a"),
 ])
+
+# ---------------------------------------------------------------- pets and lucky blocks
+
+def pet_svg(body, belly, ears="", back="", front="", defs="", beak=False):
+    """A round, cute pet. `ears` and `back` go behind the body, `front` on top."""
+    mouth = (f'<path d="M26 39 L34 39 L30 45 Z" fill="#FFB020" stroke="{INK}" stroke-width="1.5" stroke-linejoin="round"/>'
+             if beak else
+             f'<path d="M27 40 Q30 43 33 40" fill="none" stroke="{INK}" stroke-width="1.6" stroke-linecap="round"/>'
+             f'<ellipse cx="30" cy="37.5" rx="2.2" ry="1.6" fill="{INK}"/>')
+    return f'''<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="-2 -2 64 64">
+<defs>{defs}</defs>
+{back}
+{ears}
+<ellipse cx="21" cy="54" rx="6" ry="4" fill="{body}" stroke="{INK}" stroke-width="2"/>
+<ellipse cx="39" cy="54" rx="6" ry="4" fill="{body}" stroke="{INK}" stroke-width="2"/>
+<ellipse cx="30" cy="35" rx="21" ry="19" fill="{body}" stroke="{INK}" stroke-width="2.6"/>
+<ellipse cx="30" cy="43" rx="11" ry="8" fill="{belly}" opacity="0.9"/>
+<ellipse cx="22" cy="24" rx="4" ry="2.5" fill="#fff" opacity="0.4" transform="rotate(-25 22 24)"/>
+<ellipse cx="22" cy="32" rx="4.6" ry="5.2" fill="#fff" stroke="{INK}" stroke-width="1.4"/>
+<ellipse cx="38" cy="32" rx="4.6" ry="5.2" fill="#fff" stroke="{INK}" stroke-width="1.4"/>
+<circle cx="23" cy="33" r="2.7" fill="{INK}"/><circle cx="39" cy="33" r="2.7" fill="{INK}"/>
+<circle cx="23.9" cy="31.8" r="0.9" fill="#fff"/><circle cx="39.9" cy="31.8" r="0.9" fill="#fff"/>
+<ellipse cx="15" cy="40" rx="3" ry="1.8" fill="#ff7a8a" opacity="0.6"/>
+<ellipse cx="45" cy="40" rx="3" ry="1.8" fill="#ff7a8a" opacity="0.6"/>
+{mouth}
+{front}
+</svg>'''
+
+
+def ears_pointy(c, inner="#ffb3c6"):
+    return (f'<path d="M12 26 L12 4 L28 18 Z M48 26 L48 4 L32 18 Z" fill="{c}" stroke="{INK}" stroke-width="2" '
+            f'stroke-linejoin="round"/><path d="M15 21 L15 10 L23 17 Z M45 21 L45 10 L37 17 Z" fill="{inner}"/>')
+
+
+def ears_round(c, inner="#ffb3c6"):
+    return (f'<circle cx="14" cy="17" r="7" fill="{c}" stroke="{INK}" stroke-width="2"/>'
+            f'<circle cx="46" cy="17" r="7" fill="{c}" stroke="{INK}" stroke-width="2"/>'
+            f'<circle cx="14" cy="17" r="3.5" fill="{inner}"/><circle cx="46" cy="17" r="3.5" fill="{inner}"/>')
+
+
+def ears_floppy(c):
+    return (f'<ellipse cx="11" cy="30" rx="6" ry="13" fill="{c}" stroke="{INK}" stroke-width="2" transform="rotate(20 11 30)"/>'
+            f'<ellipse cx="49" cy="30" rx="6" ry="13" fill="{c}" stroke="{INK}" stroke-width="2" transform="rotate(-20 49 30)"/>')
+
+
+def ears_long(c, inner="#ffb3c6"):
+    return (f'<ellipse cx="22" cy="6" rx="5.5" ry="15" fill="{c}" stroke="{INK}" stroke-width="2"/>'
+            f'<ellipse cx="38" cy="6" rx="5.5" ry="15" fill="{c}" stroke="{INK}" stroke-width="2"/>'
+            f'<ellipse cx="22" cy="6" rx="2.5" ry="10" fill="{inner}"/><ellipse cx="38" cy="6" rx="2.5" ry="10" fill="{inner}"/>')
+
+
+def wings(c, edge=INK):
+    return (f'<path d="M12 34 Q-4 18 -2 40 Q6 44 12 42 Z M48 34 Q64 18 62 40 Q54 44 48 42 Z" fill="{c}" '
+            f'stroke="{edge}" stroke-width="2" stroke-linejoin="round"/>')
+
+
+def horn(c="#FFD23F"):
+    return f'<path d="M26 17 L30 -2 L34 17 Z" fill="{c}" stroke="{INK}" stroke-width="1.8" stroke-linejoin="round"/>'
+
+
+def horns(c="#fff"):
+    return (f'<path d="M18 19 L12 2 L24 15 Z M42 19 L48 2 L36 15 Z" fill="{c}" stroke="{INK}" stroke-width="1.8" '
+            f'stroke-linejoin="round"/>')
+
+
+def stars(*pts, c="#fff"):
+    return "".join(SPARK.format(x=x, y=y, c=c) for x, y in pts)
+
+
+def crown(y=4):
+    return (f'<path d="M18 {y + 12} L20 {y} L25 {y + 7} L30 {y - 3} L35 {y + 7} L40 {y} L42 {y + 12} Z" fill="#FFD700" '
+            f'stroke="{INK}" stroke-width="1.8" stroke-linejoin="round"/><circle cx="30" cy="{y + 5}" r="1.8" fill="#e02a2a"/>')
+
+
+GOBO_KING = gobo_svg("#FFBF1F", "#E08A00", extra_back='<path d="M10 40 L0 70 L70 70 L60 40 Z" fill="#b71c1c" '
+                     f'stroke="{INK}" stroke-width="2"/>',
+                     extra_front=f'<path d="M22 14 L24 0 L30 8 L35 -2 L40 8 L46 0 L48 14 Z" fill="#FFD700" '
+                                 f'stroke="{INK}" stroke-width="1.8" transform="translate(0 4)"/>')
+
+#                 block                price       colours: top, left, right, "?" colour
+LUCKY_BLOCKS = [("Wood Lucky Block",       500, ("#E0B070", "#B07A40", "#8A5A2B", "#FFF3D0")),
+                ("Iron Lucky Block",      5000, ("#E6E9EE", "#AAB4C0", "#7A8696", "#FFFFFF")),
+                ("Gold Lucky Block",     50000, ("#FFF08A", "#FFC800", "#D99A00", "#FFFFFF")),
+                ("Diamond Lucky Block", 500000, ("#D8FAFF", "#6FD8F7", "#2FA8D6", "#FFFFFF")),
+                ("Rainbow Lucky Block", 5000000, ("url(#lbr)", "url(#lbr)", "url(#lbr2)", "#FFFFFF"))]
+PET_CHANCES = [45, 75, 93, 100]            # inside every block: 45% / 30% / 18% / 7%
+PET_TIERS = ["Common", "Rare", "Epic", "Legendary"]
+TIER_COLORS = ["#9aa3ad", "#3a8fe0", "#9b4be0", "#f0a000"]
+#       name              boost %  picture
+PETS = [("Puppy",              5, pet_svg("#C68642", "#F2D2A9", ears_floppy("#8A5A2B"))),
+        ("Kitten",             5, pet_svg("#FFA94D", "#FFE0B8", ears_pointy("#FFA94D"),
+                                          front=f'<path d="M8 38 H16 M8 42 H16 M44 38 H52 M44 42 H52" stroke="{INK}" stroke-width="1"/>')),
+        ("Bunny",              8, pet_svg("#F5F5F5", "#FFE4EE", ears_long("#F5F5F5"))),
+        ("Hamster",           10, pet_svg("#E8B26A", "#FFF1D6", ears_round("#E8B26A"),
+                                          front='<circle cx="14" cy="42" r="5" fill="#F5C98A" opacity="0.8"/>'
+                                                '<circle cx="46" cy="42" r="5" fill="#F5C98A" opacity="0.8"/>')),
+        ("Fox",               15, pet_svg("#F2711C", "#FFFFFF", ears_pointy("#F2711C", "#fff"),
+                                          back=f'<path d="M46 46 Q66 44 60 24 Q56 38 44 40 Z" fill="#F2711C" stroke="{INK}" '
+                                               'stroke-width="2"/><path d="M58 28 Q61 24 60 24 Q57 30 55 33 Z" fill="#fff"/>')),
+        ("Owl",               18, pet_svg("#8B6B4A", "#D9C3A5", ears_pointy("#8B6B4A", "#6b4a2a"), beak=True,
+                                          front=f'<circle cx="22" cy="32" r="7.5" fill="none" stroke="#F2D2A9" stroke-width="2"/>'
+                                                f'<circle cx="38" cy="32" r="7.5" fill="none" stroke="#F2D2A9" stroke-width="2"/>')),
+        ("Penguin",           20, pet_svg("#2b2b3a", "#FFFFFF", beak=True,
+                                          back=f'<path d="M10 36 L2 46 L12 46 Z M50 36 L58 46 L48 46 Z" fill="#2b2b3a" stroke="{INK}" stroke-width="2"/>')),
+        ("Panda",             25, pet_svg("#FFFFFF", "#F0F0F0", ears_round("#222", "#444"),
+                                          front='<ellipse cx="22" cy="32" rx="7" ry="8" fill="#222" opacity="0.85" transform="rotate(-20 22 32)"/>'
+                                                '<ellipse cx="38" cy="32" rx="7" ry="8" fill="#222" opacity="0.85" transform="rotate(20 38 32)"/>'
+                                                '<circle cx="22" cy="32" r="3.5" fill="#fff"/><circle cx="38" cy="32" r="3.5" fill="#fff"/>'
+                                                f'<circle cx="23" cy="33" r="2" fill="{INK}"/><circle cx="39" cy="33" r="2" fill="{INK}"/>')),
+        ("Lion",              35, pet_svg("#E8A33A", "#FFE0A0", ears_round("#E8A33A", "#C47A1A"),
+                                          back="".join(f'<circle cx="{30 + 24 * math.cos(a / 10 * 2 * math.pi):.1f}" '
+                                                       f'cy="{33 + 22 * math.sin(a / 10 * 2 * math.pi):.1f}" r="9" '
+                                                       f'fill="#B8561A" stroke="{INK}" stroke-width="1.5"/>' for a in range(10)))),
+        ("Tiger",             40, pet_svg("#FF8C1A", "#FFFFFF", ears_round("#FF8C1A", "#fff"),
+                                          front=f'<path d="M30 16 V22 M22 18 L24 23 M38 18 L36 23 M9 34 L15 35 M51 34 L45 35 '
+                                                f'M11 44 L17 43 M49 44 L43 43" stroke="{INK}" stroke-width="2.4" stroke-linecap="round"/>')),
+        ("Unicorn",           50, pet_svg("#FFFFFF", "#FFE4F2", ears_pointy("#FFFFFF"), front=horn(),
+                                          back=f'<path d="M40 14 Q58 16 54 40 Q50 30 44 26 Z" fill="#FF7AC8" stroke="{INK}" stroke-width="2"/>')),
+        ("Phoenix",           60, pet_svg("#FF5A1F", "#FFD23F", beak=True, back=wings("#FFB020"),
+                                          front=f'<path d="M24 17 Q26 2 30 12 Q32 0 36 17 Z" fill="#FFD23F" stroke="{INK}" stroke-width="1.5"/>')),
+        ("Crystal Wolf",      80, pet_svg("#9BE7FF", "#E6FAFF", ears_pointy("#9BE7FF", "#fff"),
+                                          front=stars((2, 6), (50, 48), (44, 4)))),
+        ("Ice Dragon",       100, pet_svg("#6FD3F7", "#D8F6FF", horns(), back=wings("#bfefff"),
+                                          front=stars((4, 50)))),
+        ("Robo Cat",         110, pet_svg("#B8C2CC", "#E6E9EE", ears_pointy("#B8C2CC", "#7A8696"),
+                                          front=f'<rect x="14" y="28" width="32" height="9" rx="3" fill="#00e5ff" opacity="0.6" '
+                                                f'stroke="{INK}" stroke-width="1.2"/><path d="M30 16 V6" stroke="{INK}" stroke-width="2"/>'
+                                                '<circle cx="30" cy="5" r="3" fill="#ff3030"/>')),
+        ("Golden Eagle",     130, pet_svg("url(#pg)", "#FFF3A0", beak=True, back=wings("#E0A800"),
+                                          defs=grad("pg", "#FFF3A0", "#FFB800"), front=stars((2, 10), (52, 50)))),
+        ("Rainbow Unicorn",  200, pet_svg("url(#pr)", "#FFFFFF", ears_pointy("#FFFFFF"), front=horn() + stars((0, 8), (50, 50)),
+                                          defs=grad("pr", "#FF5E5E", "#FFD23F", "#6BE06B", "#5EC8FF", "#B36BFF"),
+                                          back='<circle cx="30" cy="32" r="31" fill="#FFF7B0" opacity="0.6"/>')),
+        ("Galaxy Whale",     250, pet_svg("url(#pw)", "#C9B6FF", defs=grad("pw", "#8C5CFF", "#2A1466", radial=True),
+                                          back=f'<path d="M46 40 Q62 38 64 24 Q56 30 50 30 Q60 22 58 14 Q52 26 44 30 Z" fill="#4B2A9A" '
+                                               f'stroke="{INK}" stroke-width="2"/>',
+                                          front=stars((20, 16), (38, 46), c="#FFE66D")
+                                                + '<path d="M28 14 Q30 4 32 14" fill="none" stroke="#9BE7FF" stroke-width="2"/>')),
+        ("Gobo King",        300, GOBO_KING),
+        ("Cosmic Dragon",    400, pet_svg("url(#pc)", "#B36BFF", horns("#FFD23F"), back=wings("#2A1466", "#B36BFF"),
+                                          defs=grad("pc", "#6A2FD0", "#1A0A40", radial=True),
+                                          front=stars((4, 4), (48, 50), (46, 8), c="#FFE66D")))]
+assert len(PETS) == 4 * len(LUCKY_BLOCKS)
+N_PETS = len(PETS)
+MAX_PETS = 20        # inventory size
+MAX_EQUIPPED = 3
+
+
+def lucky_block_svg(top, left, right, q, cracked=False):
+    defs = (grad("lbr", "#FF5E5E", "#FFD23F", "#6BE06B", "#5EC8FF", "#B36BFF")
+            + grad("lbr2", "#B36BFF", "#5EC8FF", "#6BE06B"))
+    cracks = (f'<path d="M20 30 L28 44 L22 52 L30 64 M48 28 L42 40 L50 48 L44 62 M34 8 L38 16 L32 22" fill="none" '
+              f'stroke="{INK}" stroke-width="2.5" stroke-linejoin="round"/>') if cracked else ""
+    return f'''<svg xmlns="http://www.w3.org/2000/svg" width="72" height="76" viewBox="0 0 72 76">
+<defs>{defs}</defs>
+<polygon points="36,4 66,18 36,32 6,18" fill="{top}" stroke="{INK}" stroke-width="2.5" stroke-linejoin="round"/>
+<polygon points="6,18 36,32 36,72 6,58" fill="{left}" stroke="{INK}" stroke-width="2.5" stroke-linejoin="round"/>
+<polygon points="36,32 66,18 66,58 36,72" fill="{right}" stroke="{INK}" stroke-width="2.5" stroke-linejoin="round"/>
+<text x="22" y="59" font-family="Marker" font-size="26" fill="{INK}" text-anchor="middle">?</text>
+<text x="21" y="57" font-family="Marker" font-size="26" fill="{q}" text-anchor="middle">?</text>
+<text x="52" y="59" font-family="Marker" font-size="26" fill="{INK}" text-anchor="middle">?</text>
+<text x="51" y="57" font-family="Marker" font-size="26" fill="{q}" text-anchor="middle">?</text>
+<path d="M12 22 L30 30" stroke="#fff" stroke-width="2" opacity="0.6"/>
+{cracks}
+</svg>'''
+
+
+BLOCK_ART = [lucky_block_svg(*b[2]) for b in LUCKY_BLOCKS]
+BLOCK_CRACKED = [lucky_block_svg(*b[2], cracked=True) for b in LUCKY_BLOCKS]
+
+
+def embed(svg, x, y, scale):
+    """Place a costume inside another picture, keeping its own viewBox offset."""
+    vb = svg.split('viewBox="', 1)[1].split('"', 1)[0].split()
+    return (f'<g transform="translate({x} {y}) scale({scale}) translate({-float(vb[0])} {-float(vb[1])})">'
+            f'{svg_inner(svg)}</g>')
+
+
+def block_card_svg(b):
+    name, price, colors = LUCKY_BLOCKS[b]
+    icons = []
+    for k in range(4):
+        pname, boost, art = PETS[b * 4 + k]
+        chance = PET_CHANCES[k] - (PET_CHANCES[k - 1] if k else 0)
+        cx, cy = 6 + (k % 2) * 40, 132 + (k // 2) * 48
+        icons.append(embed(art, cx + 4, cy, 0.5)
+                     + f'<text x="{cx + 20}" y="{cy + 41}" font-family="Sans Serif" font-size="7.5" font-weight="bold" '
+                       f'fill="{TIER_COLORS[k]}" text-anchor="middle">{chance}% +{boost}%</text>')
+    return f'''<svg xmlns="http://www.w3.org/2000/svg" width="88" height="232" viewBox="0 0 88 232">
+<rect x="1.5" y="1.5" width="85" height="229" rx="12" fill="#fffaf0" stroke="{INK}" stroke-width="2.5"/>
+{embed(lucky_block_svg(*colors), 12, 6, 0.9)}
+<text x="44" y="90" font-family="Sans Serif" font-size="11" font-weight="bold" fill="{INK}" text-anchor="middle">{name.split()[0].upper()}</text>
+<text x="44" y="102" font-family="Sans Serif" font-size="9" fill="{INK}" text-anchor="middle">Lucky Block</text>
+<rect x="8" y="108" width="72" height="16" rx="8" fill="#ffd23f" stroke="{INK}" stroke-width="1.2"/>
+<text x="44" y="120" font-family="Sans Serif" font-size="10" font-weight="bold" fill="{INK}" text-anchor="middle">${price:,}</text>
+{"".join(icons)}
+</svg>'''
+
+
+def pet_card_svg(p, equipped):
+    name, boost, art = PETS[p]
+    tier = p % 4
+    border = "#1f9e3a" if equipped else INK
+    ribbon = ('<rect x="8" y="2" width="68" height="12" rx="6" fill="#1f9e3a"/><text x="42" y="11.5" '
+              'font-family="Sans Serif" font-size="8.5" font-weight="bold" fill="#fff" text-anchor="middle">EQUIPPED</text>'
+              if equipped else "")
+    return f'''<svg xmlns="http://www.w3.org/2000/svg" width="84" height="72" viewBox="0 0 84 72">
+<rect x="1.5" y="1.5" width="81" height="69" rx="10" fill="{'#d6f5d6' if equipped else '#fffaf0'}" stroke="{border}" stroke-width="{4 if equipped else 2.5}"/>
+{embed(art, 26, 8, 0.5)}
+<text x="42" y="52" font-family="Sans Serif" font-size="8.5" font-weight="bold" fill="{INK}" text-anchor="middle">{name}</text>
+<rect x="14" y="56" width="56" height="12" rx="6" fill="{TIER_COLORS[tier]}"/>
+<text x="42" y="65.5" font-family="Sans Serif" font-size="8.5" font-weight="bold" fill="#fff" text-anchor="middle">+{boost}% money</text>
+{ribbon}
+</svg>'''
+
+
+BLOCK_CARDS = [block_card_svg(b) for b in range(len(LUCKY_BLOCKS))]
+PET_CARDS = [pet_card_svg(p, eq_) for p in range(N_PETS) for eq_ in (False, True)]
+
+RAYS = "".join(f'<polygon points="150,150 {150 + 150 * math.cos(2 * math.pi * i / 16):.1f},{150 + 150 * math.sin(2 * math.pi * i / 16):.1f} '
+               f'{150 + 150 * math.cos(2 * math.pi * (i + 0.5) / 16):.1f},{150 + 150 * math.sin(2 * math.pi * (i + 0.5) / 16):.1f}" '
+               f'fill="#FFE066" opacity="0.8"/>' for i in range(16))
+RAYS = (f'<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300">{RAYS}'
+        '<circle cx="150" cy="150" r="60" fill="#fff" opacity="0.7"/></svg>')
+
+PAW_ICON = (f'<ellipse cx="26" cy="26" rx="7" ry="6" fill="#ffd23f" stroke="{INK}" stroke-width="1.6"/>'
+            + "".join(f'<circle cx="{x}" cy="{y}" r="3" fill="#ffd23f" stroke="{INK}" stroke-width="1.4"/>'
+                      for x, y in ((18, 18), (23, 13), (29, 13), (34, 18))))
+BLOCK_ICON = embed(lucky_block_svg(*LUCKY_BLOCKS[2][2]), 12, 6, 0.4)
+BAG_ICON = (f'<path d="M16 16 Q16 8 26 8 Q36 8 36 16" fill="none" stroke="{INK}" stroke-width="2"/>'
+            f'<rect x="12" y="15" width="28" height="20" rx="5" fill="#c47a3a" stroke="{INK}" stroke-width="1.8"/>'
+            f'<rect x="22" y="21" width="8" height="5" rx="1" fill="#ffd23f" stroke="{INK}" stroke-width="1"/>')
+
+
+def menu_backdrop(title, top, ray):
+    rays = "".join(f'<polygon points="240,200 {240 + 700 * math.cos(2 * math.pi * i / 20):.0f},'
+                   f'{200 + 700 * math.sin(2 * math.pi * i / 20):.0f} {240 + 700 * math.cos(2 * math.pi * (i + 0.5) / 20):.0f},'
+                   f'{200 + 700 * math.sin(2 * math.pi * (i + 0.5) / 20):.0f}" fill="{ray}"/>' for i in range(20))
+    return f'''<svg xmlns="http://www.w3.org/2000/svg" width="480" height="360" viewBox="0 0 480 360">
+<rect width="480" height="360" fill="{top}"/>
+{rays}
+<rect x="0" y="0" width="480" height="30" fill="#2d3748" opacity="0.35"/>
+<text x="242" y="56" font-family="Marker" font-size="30" fill="{INK}" text-anchor="middle">{title}</text>
+<text x="240" y="54" font-family="Marker" font-size="30" fill="#ffd23f" text-anchor="middle">{title}</text>
+{SPARK.format(x=130, y=34, c="#fff")}{SPARK.format(x=342, y=38, c="#fff")}
+</svg>'''
+
+
+PET_SHOP_BG = menu_backdrop("PET SHOP", "#1a7a4a", "#23965c")
+INVENTORY_BG = menu_backdrop("INVENTORY", "#8a4a1a", "#a65f28")
+
+
+PETS_BUTTON = pill_button("PETS", "#2fd07a", "#138a4a", BLOCK_ICON)
+INV_BUTTON = pill_button("INVENTORY", "#ffb347", "#d0701a", BAG_ICON, w=170, size=20)
+
 
 # ---------------------------------------------------------------- sounds (WAV)
 
@@ -671,13 +927,19 @@ STOP_MUTATION = {"tagName": "mutation", "children": [], "hasnext": "false"}
 
 GLOBAL_VARS = ["Money", "Income", "Rebirths", "Multiplier", "Rebirth Cost", "Speed", "Upgrade Cost",
                "Scene", "Steal Cooldown", "Raid Time", "Home X", "Home Y", "Tip",
-               "Flash", "FX", "FX X", "FX Y", "Skin"]
+               "Flash", "FX", "FX X", "FX Y", "Skin", "Pet Boost", "Opening", "Open Block", "New Pet",
+               "Delete Lock"]
 LISTS = {"My Slots": [0] * 8,
          "Names": [g[0] for g in GOBOS], "Tiers": [g[1] for g in GOBOS],
          "Prices": [g[2] for g in GOBOS], "Rates": [g[3] for g in GOBOS], "Chances": CUMULATIVE,
          "Skin Names": [k[0] for k in SKINS], "Skin Prices": [k[1] for k in SKINS],
-         "Skins Owned": [1] + [0] * (len(SKINS) - 1)}
-BROADCASTS = ["title", "start", "tip", "raid start", "raid end", "flash", "fx", "shop open", "shop close"]
+         "Skins Owned": [1] + [0] * (len(SKINS) - 1),
+         "Pet Names": [q[0] for q in PETS], "Pet Boosts": [q[1] for q in PETS],
+         "Pet Tiers": [PET_TIERS[i % 4] for i in range(len(PETS))],
+         "Block Names": [b[0] for b in LUCKY_BLOCKS], "Block Prices": [b[1] for b in LUCKY_BLOCKS],
+         "My Pets": [], "Pet Equipped": []}
+BROADCASTS = ["title", "start", "tip", "raid start", "raid end", "flash", "fx", "shop open", "shop close",
+              "pets open", "inv open", "open block", "reveal", "inv refresh", "pets changed"]
 
 
 def vid(name):
@@ -904,11 +1166,17 @@ stage = Compiler("stage")
 init = [set_var("Money", 50), set_var("Income", 0), set_var("Rebirths", 0), set_var("Multiplier", 1),
         set_var("Rebirth Cost", 20000), set_var("Speed", 4), set_var("Upgrade Cost", 200),
         set_var("Scene", 1), set_var("Steal Cooldown", 0), set_var("Raid Time", 0), set_var("Tip", ""),
-        set_var("Skin", 1), clear_list("My Slots"), clear_list("Skins Owned"), add_to("Skins Owned", 1)] + [
+        set_var("Skin", 1), set_var("Pet Boost", 0), set_var("Opening", 0), set_var("Delete Lock", 0),
+        clear_list("My Pets"), clear_list("Pet Equipped"), clear_list("My Slots"), clear_list("Skins Owned"), add_to("Skins Owned", 1)] + [
         add_to("My Slots", 0) for _ in range(8)] + [add_to("Skins Owned", 0) for _ in range(N_SKINS - 1)]
 income = [set_var("Income", 0)] + [
     if_(gt(item("My Slots", i), 0), [change_var("Income", item("Rates", item("My Slots", i)))])
-    for i in range(1, 9)] + [set_var("Income", mul(V("Income"), V("Multiplier")))]
+    for i in range(1, 9)] + [
+    # Equipped pets add a money boost (in %).
+    set_var("Pet Boost", 0)] + [
+    if_(eq(item("Pet Equipped", i), 1), [change_var("Pet Boost", item("Pet Boosts", item("My Pets", i)))])
+    for i in range(1, MAX_PETS + 1)] + [
+    set_var("Income", round_(mul(mul(V("Income"), V("Multiplier")), add(1, div(V("Pet Boost"), 100)))))]
 stage.script([
     flag(), *init, switch_backdrop("Gobo Land"), hide_var("Raid Time"),
     broadcast_wait("title"),
@@ -931,6 +1199,8 @@ stage.script([
     show_var("Raid Time"),
 ], 20, 600)
 stage.script([when_msg("shop open"), switch_backdrop("Skin Shop")], 300, 600)
+stage.script([when_msg("pets open"), switch_backdrop("Pet Shop")], 300, 650)
+stage.script([when_msg("inv open"), switch_backdrop("Inventory")], 300, 680)
 stage.script([when_msg("shop close"), switch_backdrop("Gobo Land")], 300, 700)
 stage.script([
     when_msg("raid end"),
@@ -942,7 +1212,7 @@ stage.script([
 # ---------------------------------------------------------------- STEAL button
 
 button = Compiler("button", local_vars=["found"])
-button.script([flag(), rot_style("all around"), point_dir(90), goto_xy(0, 100), costume("ready"), size(100),
+button.script([flag(), rot_style("all around"), point_dir(90), goto_xy(40, 92), costume("ready"), size(100),
                front(), say(""), show()], 20, 20)
 button.script([
     when_msg("start"),
@@ -989,7 +1259,7 @@ player.script([
 ], 20, 20)
 player.script([
     when_msg("start"),
-    forever([if_else(eq(V("Scene"), 3), [hide()], [
+    forever([if_else(gt(V("Scene"), 2), [hide()], [
         show(),
         set_var("step", V("Speed")), set_var("moving", 0),
         if_(any_key("right arrow", "d"), [point_dir(90), change_x(V("step")), set_var("moving", 1)]),
@@ -1169,35 +1439,208 @@ gobo.script([
     forever([if_else(not_(eq(V("Scene"), 1)), [hide(), say("")], [show(), *mine])]),
 ], 420, 20)
 
-# ---------------------------------------------------------------- SKINS button and skin shop
+# ---------------------------------------------------------------- SKINS / PETS / INVENTORY buttons and shops
+
+MENU_SIZE = 65   # the three menu buttons are drawn smaller than the STEAL button
+
 
 def hover(normal=100, big=110):
     return if_else(touching("_mouse_"), [size(big), wobble(4, 900, 0)], [size(normal), point_dir(90)])
 
 
-skins_btn = Compiler("skinsbtn")
-skins_btn.script([flag(), rot_style("all around"), goto_xy(-172, 124), point_dir(90), size(100), show(), front()],
-                 20, 20)
-skins_btn.script([
-    when_msg("start"),
-    forever([if_else(eq(V("Scene"), 1), [show(), hover()], [hide()])]),
-], 20, 140)
-skins_btn.script([
-    when_clicked(),
-    if_(eq(V("Scene"), 1), [size(85), wait(0.08), set_var("Scene", 3), play("whoosh"), broadcast("shop open")]),
-], 20, 260)
+def menu_button(prefix, x, y, scene, message):
+    """A small button at the top left that opens a menu screen."""
+    comp = Compiler(prefix)
+    comp.script([flag(), rot_style("all around"), goto_xy(x, y), point_dir(90), size(MENU_SIZE), show(), front()],
+                20, 20)
+    comp.script([
+        when_msg("start"),
+        forever([if_else(eq(V("Scene"), 1), [show(), hover(MENU_SIZE, MENU_SIZE + 8)], [hide()])]),
+    ], 20, 140)
+    comp.script([
+        when_clicked(),
+        if_(eq(V("Scene"), 1), [size(MENU_SIZE - 10), wait(0.08), set_var("Scene", scene), play("whoosh"),
+                                broadcast(message)]),
+    ], 20, 260)
+    return comp
+
+
+MENU_POS = {"skins": (-196, 140), "pets": (-110, 140), "inv": (-189, 110)}
+skins_btn = menu_button("skinsbtn", *MENU_POS["skins"], 3, "shop open")
+pets_btn = menu_button("petsbtn", *MENU_POS["pets"], 4, "pets open")
+inv_btn = menu_button("invbtn", *MENU_POS["inv"], 5, "inv open")
 
 back_btn = Compiler("backbtn")
 back_btn.script([flag(), hide(), rot_style("all around"), goto_xy(178, 150)], 20, 20)
-back_btn.script([
-    when_msg("shop open"), show(), front(),
-    repeat_until(not_(eq(V("Scene"), 3)), [hover()]),
-    hide(),
-], 20, 120)
+for n, msg in enumerate(["shop open", "pets open", "inv open"]):
+    back_btn.script([
+        when_msg(msg), show(), front(),
+        *([if_(eq(B("data_lengthoflist", fields={"LIST": "My Pets"}), 0),
+               [say_for("No pets yet! Buy Lucky Blocks in the PET SHOP.", 3)])] if msg == "inv open" else []),
+        repeat_until(eq(V("Scene"), 1), [hover()]),
+        hide(),
+    ], 20, 120 + n * 160)
 back_btn.script([
     when_clicked(),
-    if_(eq(V("Scene"), 3), [set_var("Scene", 1), play("whoosh"), broadcast("shop close")]),
-], 20, 260)
+    if_(and_(gt(V("Scene"), 2), eq(V("Opening"), 0)), [set_var("Scene", 1), play("whoosh"), broadcast("shop close")]),
+], 20, 620)
+
+# ---------------------------------------------------------------- pet shop: lucky blocks
+
+N_BLOCKS = len(LUCKY_BLOCKS)
+MY_PETS_LEN = B("data_lengthoflist", fields={"LIST": "My Pets"})
+BLOCK_PRICE = item("Block Prices", V("id"))
+
+block = Compiler("block", local_vars=["id", "orig", "r"])
+block.script([flag(), hide(), rot_style("all around"), set_var("orig", 1)], 20, 20)
+block.script([
+    when_msg("pets open"),
+    if_(eq(V("orig"), 1), [*[[set_var("id", i), goto_xy(-184 + (i - 1) * 92, -22), clone_me()]
+                             for i in range(1, N_BLOCKS + 1)]]),
+], 20, 120)
+block.script([
+    when_cloned(),
+    set_var("orig", 0), costume(V("id")), clear_effects(), show(), front(),
+    forever([if_else(eq(V("Opening"), 1), [size(100), point_dir(90)], [hover(100, 106)])]),
+], 300, 20)
+block.script([
+    when_clicked(),
+    if_(and_(eq(V("orig"), 0), eq(V("Opening"), 0)), [
+        if_else(lt(V("Money"), BLOCK_PRICE),
+                [play("pop"), repeat(3, [point_dir(84), wait(0.04), point_dir(96), wait(0.04)]), point_dir(90),
+                 say_for(join("You need $", BLOCK_PRICE, "!"), 1.5)],
+                [if_else(not_(lt(MY_PETS_LEN, MAX_PETS)),
+                         [say_for("Your inventory is full! Delete a pet first.", 2)],
+                         [change_var("Money", sub(0, BLOCK_PRICE)),
+                          set_var("Opening", 1),
+                          # Which pet? 45% / 30% / 18% / 7% of this block's 4 pets.
+                          set_var("r", rand(1, 100)), set_var("New Pet", sub(mul(V("id"), 4), 3)),
+                          *[if_(gt(V("r"), c), [set_var("New Pet", add(sub(mul(V("id"), 4), 3), k + 1))])
+                            for k, c in enumerate(PET_CHANCES[:3])],
+                          set_var("Open Block", V("id")),
+                          add_to("My Pets", V("New Pet")), add_to("Pet Equipped", 0),
+                          play("cash"),
+                          broadcast("open block")])]),
+    ]),
+], 300, 300)
+block.script([when_msg("shop close"), if_(eq(V("orig"), 0), [delete_clone()])], 700, 20)
+
+# The big lucky block in the middle that shakes, cracks and turns into a pet.
+opener = Compiler("opener")
+opener.script([flag(), hide(), rot_style("all around"), set_var("Opening", 0)], 20, 20)
+opener.script([
+    when_msg("open block"),
+    goto_xy(0, -10), point_dir(90), costume(V("Open Block")), clear_effects(), size(60), show(), front(), say(""),
+    repeat(10, [change_size(9)]),
+    repeat(16, [point_dir(add(90, rand(-10, 10)))]),
+    costume(add(N_BLOCKS, V("Open Block"))), play("pop"),
+    repeat(14, [point_dir(add(90, rand(-25, 25))), change_size(2)]),
+    point_dir(90),
+    *flash("lucky"),
+    play("cash"),
+    costume(add(mul(2, N_BLOCKS), V("New Pet"))), size(20),
+    broadcast("reveal"), wait(0),
+    front(),
+    repeat(10, [change_size(16)]),
+    repeat(3, [change_size(-8)]),
+    say(join("You got a ", item("Pet Tiers", V("New Pet")), " ", item("Pet Names", V("New Pet")), "! +",
+             item("Pet Boosts", V("New Pet")), "% money. Equip it in INVENTORY!")),
+    repeat(70, [point_dir(add(90, mul(6, sin_(mul(timer(), 500)))))]),
+    say(""), point_dir(90), hide(),
+    set_var("Opening", 0),
+], 20, 120)
+
+rays = Compiler("rays")
+rays.script([flag(), hide()], 20, 20)
+rays.script([
+    when_msg("reveal"),
+    goto_xy(0, -10), size(40), set_effect("GHOST", 20), show(), front(),
+    repeat_until(eq(V("Opening"), 0), [B("motion_turnright", DEGREES=3),
+                                        if_(lt(B("looks_size", ), 130), [change_size(6)])]),
+    hide(),
+], 20, 120)
+
+# ---------------------------------------------------------------- inventory: equip pets
+
+PET_ID = item("My Pets", V("slot"))
+IS_EQUIPPED = item("Pet Equipped", V("slot"))
+count_equipped = [set_var("count", 0)] + [
+    if_(eq(item("Pet Equipped", i), 1), [change_var("count", 1)]) for i in range(1, MAX_PETS + 1)]
+
+petcard = Compiler("petcard", local_vars=["slot", "orig", "count"])
+make_cards = [*[if_(not_(gt(i, MY_PETS_LEN)),
+                    [set_var("slot", i), goto_xy(-180 + ((i - 1) % 5) * 90, 80 - ((i - 1) // 5) * 74), clone_me()])
+                for i in range(1, MAX_PETS + 1)]]
+petcard.script([flag(), hide(), rot_style("all around"), set_var("orig", 1)], 20, 20)
+petcard.script([when_msg("inv open"), if_(eq(V("orig"), 1), make_cards)], 20, 120)
+petcard.script([
+    when_msg("inv refresh"),
+    if_else(eq(V("orig"), 1), make_cards, [delete_clone()]),
+], 20, 400)
+petcard.script([
+    when_cloned(),
+    set_var("orig", 0), clear_effects(), show(), front(),
+    forever([
+        costume(add(sub(mul(PET_ID, 2), 1), IS_EQUIPPED)),
+        if_else(eq(IS_EQUIPPED, 1),
+                [size(add(104, mul(3, sin_(mul(timer(), 400))))), wobble(3, 300, mul(V("slot"), 40))],
+                [hover(100, 108)]),
+        if_(not_(key("x")), [set_var("Delete Lock", 0)]),
+        # Hold the mouse over a pet and press X to delete it.
+        if_(and_(touching("_mouse_"), key("x"), eq(V("Delete Lock"), 0)), [
+            set_var("Delete Lock", 1),
+            B("data_deleteoflist", fields={"LIST": "My Pets"}, INDEX=V("slot")),
+            B("data_deleteoflist", fields={"LIST": "Pet Equipped"}, INDEX=V("slot")),
+            play("pop"), broadcast("pets changed"), broadcast("inv refresh"),
+        ]),
+    ]),
+], 300, 20)
+petcard.script([
+    when_clicked(),
+    if_(eq(V("orig"), 0), [
+        if_else(eq(IS_EQUIPPED, 1),
+                [replace("Pet Equipped", V("slot"), 0), play("pop"), say_for("Unequipped", 1)],
+                [*count_equipped,
+                 if_else(lt(V("count"), MAX_EQUIPPED),
+                         [replace("Pet Equipped", V("slot"), 1), play("cash"),
+                          say_for(join("Equipped! +", item("Pet Boosts", PET_ID), "% money"), 1.5)],
+                         [play("pop"), say_for(f"You can only equip {MAX_EQUIPPED} pets. Unequip one first!", 2)])]),
+        broadcast("pets changed"),
+    ]),
+], 300, 400)
+petcard.script([when_msg("shop close"), if_(eq(V("orig"), 0), [delete_clone()])], 700, 20)
+
+# ---------------------------------------------------------------- equipped pets follow the player
+
+follower = Compiler("follower", local_vars=["pid", "place", "orig", "n", "tx", "ty"])
+PX, PY = prop_of("x position", "Player"), prop_of("y position", "Player")
+make_followers = [set_var("n", 0)] + [
+    if_(eq(item("Pet Equipped", i), 1),
+        [change_var("n", 1), set_var("pid", item("My Pets", i)), set_var("place", V("n")), clone_me()])
+    for i in range(1, MAX_PETS + 1)]
+follower.script([flag(), hide(), set_var("orig", 1)], 20, 20)
+follower.script([
+    when_msg("pets changed"),
+    if_else(eq(V("orig"), 1), make_followers, [delete_clone()]),
+], 20, 120)
+follower.script([
+    when_cloned(),
+    set_var("orig", 0), costume(V("pid")), size(42), goto_xy(PX, PY),
+    forever([
+        if_else(gt(V("Scene"), 2), [hide()], [
+            show(),
+            # Walk behind the player, one after another, with a little hop.
+            if_else(gt(prop_of("direction", "Player"), 0),
+                    [set_var("tx", sub(PX, add(20, mul(V("place"), 24)))), point_dir(90)],
+                    [set_var("tx", add(PX, add(20, mul(V("place"), 24)))), point_dir(-90)]),
+            set_var("ty", add(sub(PY, 16), mul(4, mathop("abs", sin_(add(mul(timer(), 400), mul(V("place"), 70))))))),
+            change_x(div(sub(V("tx"), x_pos()), 6)),
+            change_y(div(sub(V("ty"), y_pos()), 6)),
+        ]),
+    ]),
+], 300, 20)
+
+# ---------------------------------------------------------------- skin shop cards
 
 CARD_PRICE = item("Skin Prices", V("id"))
 card = Compiler("card", local_vars=["id", "orig"])
@@ -1205,7 +1648,7 @@ card.script([flag(), hide(), rot_style("all around"), set_var("orig", 1)], 20, 2
 card.script([
     when_msg("shop open"),
     if_(eq(V("orig"), 1), [
-        *[[set_var("id", i), goto_xy(-180 + ((i - 1) % 5) * 90, 86 - ((i - 1) // 5) * 76), clone_me()]
+        *[[set_var("id", i), goto_xy(-180 + ((i - 1) % 5) * 90, 80 - ((i - 1) // 5) * 74), clone_me()]
           for i in range(1, N_SKINS + 1)],
     ]),
 ], 20, 120)
@@ -1323,7 +1766,8 @@ targets = [
      "comments": {}, "currentCostume": 0,
      "costumes": [svg_costume("Gobo Land", backdrop(), 240, 180)]
                  + [svg_costume(f"{r[0].title()}'s Base", raid_backdrop(*r), 240, 180) for r in RAID_BASES]
-                 + [svg_costume("Skin Shop", shop_backdrop(), 240, 180)],
+                 + [svg_costume("Skin Shop", shop_backdrop(), 240, 180),
+                    svg_costume("Pet Shop", PET_SHOP_BG, 240, 180), svg_costume("Inventory", INVENTORY_BG, 240, 180)],
      "sounds": [], "volume": 100, "layerOrder": 0, "tempo": 60, "videoTransparency": 50,
      "videoState": "on", "textToSpeechLanguage": None},
     sprite(cloud, "Cloud", [svg_costume("cloud", CLOUD)], [], 1, visible=False),
@@ -1335,13 +1779,28 @@ targets = [
                               for i, art in enumerate(PLAYER_FRAMES)], [wav_sound("ouch", OUCH)], 3, HOME_X, HOME_Y),
     sprite(button, "STEAL Button", [svg_costume("ready", STEAL_READY), svg_costume("wait", STEAL_WAIT)],
            [wav_sound("whoosh", WHOOSH)], 4, 0, 100, style="all around"),
-    sprite(skins_btn, "SKINS Button", [svg_costume("skins", SKINS_BUTTON)], [wav_sound("whoosh", WHOOSH)], 5,
-           -172, 124, style="all around"),
+    sprite(follower, "Pet", [svg_costume(q[0], q[2]) for q in PETS], [], 0, visible=False),
+    sprite(skins_btn, "SKINS Button", [svg_costume("skins", SKINS_BUTTON)], [wav_sound("whoosh", WHOOSH)], 0,
+           *MENU_POS["skins"], style="all around"),
+    sprite(pets_btn, "PETS Button", [svg_costume("pets", PETS_BUTTON)], [wav_sound("whoosh", WHOOSH)], 0,
+           *MENU_POS["pets"], style="all around"),
+    sprite(inv_btn, "INVENTORY Button", [svg_costume("inventory", INV_BUTTON)], [wav_sound("whoosh", WHOOSH)], 0,
+           *MENU_POS["inv"], style="all around"),
     sprite(back_btn, "BACK Button", [svg_costume("back", BACK_BUTTON)], [wav_sound("whoosh", WHOOSH)], 5,
            178, 150, visible=False, style="all around"),
     sprite(card, "Skin Card", [svg_costume(f"{SKINS[i // 2][0]}{' owned' if i % 2 else ''}", art)
                                for i, art in enumerate(SKIN_CARDS)],
            [wav_sound("pop", POP), wav_sound("cash", CASH)], 5, visible=False, style="all around"),
+    sprite(block, "Lucky Block", [svg_costume(b[0], art) for b, art in zip(LUCKY_BLOCKS, BLOCK_CARDS)],
+           [wav_sound("pop", POP), wav_sound("cash", CASH)], 0, visible=False, style="all around"),
+    sprite(petcard, "Pet Card", [svg_costume(f"{PETS[i // 2][0]}{' equipped' if i % 2 else ''}", art)
+                                 for i, art in enumerate(PET_CARDS)],
+           [wav_sound("pop", POP), wav_sound("cash", CASH)], 0, visible=False, style="all around"),
+    sprite(rays, "Rays", [svg_costume("rays", RAYS)], [], 0, visible=False, style="all around"),
+    sprite(opener, "Block Opener", [svg_costume(b[0], art) for b, art in zip(LUCKY_BLOCKS, BLOCK_ART)]
+           + [svg_costume(b[0] + " cracked", art) for b, art in zip(LUCKY_BLOCKS, BLOCK_CRACKED)]
+           + [svg_costume(q[0], q[2]) for q in PETS],
+           [wav_sound("pop", POP), wav_sound("cash", CASH)], 0, visible=False, style="all around"),
     sprite(flash_sprite, "Comic Flash", [svg_costume(n, art, 240, 180) for n, art in FLASHES.items()], [], 5,
            visible=False),
     sprite(message, "Message", [svg_costume("title", TITLE_CARD, 240, 180)], [], 6, visible=False, style="all around"),
@@ -1359,8 +1818,8 @@ def monitor(name, x, y):
 
 project = {
     "targets": targets,
-    "monitors": [monitor("Money", 5, 3), monitor("Income", 140, 3), monitor("Rebirths", 270, 3),
-                 dict(monitor("Raid Time", 380, 3), visible=False)],
+    "monitors": [monitor("Money", 5, 3), monitor("Income", 125, 3), monitor("Rebirths", 245, 3),
+                 monitor("Pet Boost", 355, 3), dict(monitor("Raid Time", 200, 32), visible=False)],
     "extensions": [],
     "meta": {"semver": "3.0.0", "vm": "0.2.0", "agent": "build_sb3.py"},
 }

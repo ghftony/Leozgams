@@ -23,26 +23,34 @@ OUT = HERE / "Steal_a_Gobo.sb3"
 # ---------------------------------------------------------------- Gobo types
 
 #        name               tier          price     $/sec  chance (out of 10000)
-GOBOS = [("Gobo",            "Common",        10,       1, 2999),
-         ("Bubblegum Gobo",  "Common",        15,       2, 2200),
-         ("Leaf Gobo",       "Uncommon",      50,       4, 1500),
-         ("Choco Gobo",      "Uncommon",      80,       6, 1100),
-         ("Ice Gobo",        "Rare",         250,      15,  800),
-         ("Ocean Gobo",      "Rare",         400,      22,  550),
-         ("Fire Gobo",       "Epic",        1200,      60,  350),
-         ("Ninja Gobo",      "Epic",        2000,      90,  230),
-         ("Robo Gobo",       "Legendary",   6000,     250,  120),
+GOBOS = [("Gobo",            "Common",        10,       1, 2400),
+         ("Bubblegum Gobo",  "Common",        15,       2, 1800),
+         ("Honey Gobo",      "Common",        20,       2, 1300),
+         ("Leaf Gobo",       "Uncommon",      50,       4, 1100),
+         ("Choco Gobo",      "Uncommon",      80,       6,  800),
+         ("Cactus Gobo",     "Uncommon",     100,       7,  600),
+         ("Ice Gobo",        "Rare",         250,      15,  450),
+         ("Ocean Gobo",      "Rare",         400,      22,  330),
+         ("Candy Gobo",      "Rare",         550,      28,  250),
+         ("Fire Gobo",       "Epic",        1200,      60,  220),
+         ("Ninja Gobo",      "Epic",        2000,      90,  160),
+         ("Lava Gobo",       "Epic",        3000,     120,  110),
+         ("Robo Gobo",       "Legendary",   6000,     250,  100),
          ("Pirate Gobo",     "Legendary",   9000,     350,   80),
-         ("Galaxy Gobo",     "Mythic",     25000,     900,   35),
-         ("Ghost Gobo",      "Mythic",     40000,    1300,   20),
-         ("Golden Gobo",     "Gobo God",  120000,    3500,    8),
-         ("Diamond Gobo",    "Gobo God",  200000,    5500,    5),
-         ("Rainbow Gobo",    "Secret",    600000,   15000,    2),
-         ("Dragon Gobo",     "Secret",   1000000,   25000,    1)]
+         ("Moon Gobo",       "Legendary",  12000,     450,   60),
+         ("Galaxy Gobo",     "Mythic",     25000,     900,   60),
+         ("Ghost Gobo",      "Mythic",     40000,    1300,   45),
+         ("Thunder Gobo",    "Mythic",     55000,    1700,   35),
+         ("Golden Gobo",     "Gobo God",  120000,    3500,   30),
+         ("Diamond Gobo",    "Gobo God",  200000,    5500,   25),
+         ("Cyber Gobo",      "Gobo God",  300000,    7500,   20),
+         ("Rainbow Gobo",    "Secret",    600000,   15000,   12),
+         ("Dragon Gobo",     "Secret",   1000000,   25000,    8),
+         ("Shadow Gobo",     "Secret",   2000000,   45000,    5)]
 CUMULATIVE = [sum(g[4] for g in GOBOS[:i + 1]) for i in range(len(GOBOS))]
 assert CUMULATIVE[-1] == 10000
 N_GOBOS = len(GOBOS)
-RARE_FROM = 9   # Gobo number 9 (Robo) and up get a "WOW!" announcement
+RARE_FROM = 13  # Gobo number 13 (Robo, Legendary) and up get a "WOW!" announcement
 
 # ---------------------------------------------------------------- art (SVG)
 
@@ -150,40 +158,250 @@ GOBO_STYLES = [
                      'stroke-width="1.5" stroke-linejoin="round"/>'
                      '<path d="M24 58 L28 54 L32 58 L36 54 L40 58 L44 54" fill="none" stroke="#FFD23F" stroke-width="1.5"/>'),
 ]
+OLD_ORDER = ["Gobo", "Bubblegum Gobo", "Leaf Gobo", "Choco Gobo", "Ice Gobo", "Ocean Gobo", "Fire Gobo",
+             "Ninja Gobo", "Robo Gobo", "Pirate Gobo", "Galaxy Gobo", "Ghost Gobo", "Golden Gobo",
+             "Diamond Gobo", "Rainbow Gobo", "Dragon Gobo"]
+STYLE_BY_NAME = dict(zip(OLD_ORDER, GOBO_STYLES))
+STYLE_BY_NAME.update({
+    "Honey Gobo": dict(body="#FFD23F", edge="#C98A00",
+                       extra_back='<ellipse cx="12" cy="18" rx="9" ry="6" fill="#fff" opacity="0.8" stroke="#9ad" '
+                                  'transform="rotate(-30 12 18)"/><ellipse cx="58" cy="18" rx="9" ry="6" fill="#fff" '
+                                  'opacity="0.8" stroke="#9ad" transform="rotate(30 58 18)"/>',
+                       extra_front=f'<path d="M19 55 Q35 62 51 55" fill="none" stroke="{INK}" stroke-width="3.5"/>'
+                                   f'<path d="M17 30 Q35 24 53 30" fill="none" stroke="{INK}" stroke-width="3.5"/>'),
+    "Cactus Gobo": dict(body="#5BBF5B", edge="#2E7D32",
+                        extra_front="".join(f'<path d="M{x} {y} l{dx} {dy}" stroke="#F4F1C0" stroke-width="1.5"/>'
+                                            for x, y, dx, dy in ((14, 34, -4, -2), (56, 34, 4, -2), (16, 52, -4, 1),
+                                                                 (54, 52, 4, 1), (24, 22, -2, -3), (46, 22, 2, -3)))
+                        + f'<circle cx="35" cy="4" r="4" fill="#ff5e9e" stroke="{INK}" stroke-width="1.2"/>'
+                          '<circle cx="35" cy="4" r="1.5" fill="#ffe066"/>'),
+    "Candy Gobo": dict(body="url(#candy)", edge="#D02A2A",
+                       defs='<pattern id="candy" width="12" height="12" patternUnits="userSpaceOnUse" '
+                            'patternTransform="rotate(40)"><rect width="12" height="12" fill="#fff"/>'
+                            '<rect width="6" height="12" fill="#FF4D6D"/></pattern>'),
+    "Lava Gobo": dict(body="#4A2A2A", edge="#FF6A00",
+                      extra_back='<circle cx="35" cy="38" r="33" fill="#FF6A00" opacity="0.25"/>',
+                      extra_front='<path d="M18 32 L24 36 L22 42 M50 30 L46 36 L50 40 M28 58 L34 54 L40 58 M40 18 L36 24" '
+                                  'fill="none" stroke="#FFB020" stroke-width="2.2" stroke-linecap="round"/>'),
+    "Moon Gobo": dict(body="#D8DEE9", edge="#7A869A",
+                      extra_front='<circle cx="20" cy="30" r="3" fill="#aab4c4"/><circle cx="50" cy="28" r="2.5" '
+                                  'fill="#aab4c4"/><circle cx="46" cy="58" r="3" fill="#aab4c4"/><circle cx="24" cy="57" '
+                                  'r="2" fill="#aab4c4"/>' + SPARK.format(x=62, y=6, c="#FFE066")),
+    "Thunder Gobo": dict(body="#3C4A7A", edge="#1C2448",
+                         extra_front=f'<path d="M38 12 L28 30 L35 30 L30 44 L44 24 L37 24 L42 12 Z" fill="#FFE600" '
+                                     f'stroke="{INK}" stroke-width="1.2" transform="translate(-24 -6) scale(0.8)"/>'
+                                     f'<path d="M38 12 L28 30 L35 30 L30 44 L44 24 L37 24 L42 12 Z" fill="#FFE600" '
+                                     f'stroke="{INK}" stroke-width="1.2" transform="translate(28 14) scale(0.6)"/>'),
+    "Cyber Gobo": dict(body="#0D1B2A", edge="#00FF9C",
+                       extra_back='<circle cx="35" cy="38" r="34" fill="#00FF9C" opacity="0.18"/>',
+                       extra_front='<path d="M16 30 H24 V26 M54 30 H46 V34 M20 56 H28 V52 M50 56 H42 V60" fill="none" '
+                                   'stroke="#00FF9C" stroke-width="1.8"/><circle cx="24" cy="26" r="1.8" fill="#00FF9C"/>'
+                                   '<circle cx="46" cy="34" r="1.8" fill="#00FF9C"/>'),
+    "Shadow Gobo": dict(body="#1A1025", edge="#6A0DAD",
+                        extra_back='<circle cx="35" cy="38" r="35" fill="#9B30FF" opacity="0.3"/>',
+                        extra_front='<ellipse cx="28" cy="40" rx="6" ry="7" fill="#C77DFF"/><ellipse cx="42" cy="40" '
+                                    'rx="6" ry="7" fill="#C77DFF"/><circle cx="29" cy="41" r="2.5" fill="#fff"/>'
+                                    '<circle cx="43" cy="41" r="2.5" fill="#fff"/>'),
+})
+GOBO_STYLES = [STYLE_BY_NAME[g[0]] for g in GOBOS]
 assert len(GOBO_STYLES) == N_GOBOS
 GOBO_ART = [gobo_svg(**st) for st in GOBO_STYLES]
 GOBO_BLINK = [gobo_svg(**st, blink=True) for st in GOBO_STYLES]
 
 
-def person_svg(shirt, stripe, hat, mask, frame=0):
-    """The thief. frame 0 = standing, 1 and 2 = walking (legs and arms swing, body bounces)."""
+def person_svg(shirt, stripe, hat, mask, frame=0, skin="#F2C29B", pants="#333", extra="", back="",
+               behind_head="", defs=""):
+    """The thief. frame 0 = standing, 1 and 2 = walking (legs and arms swing, body bounces).
+    hat/mask can be None. `extra` is drawn on top (hats, glasses...), `back` behind the body (capes),
+    `behind_head` between the body and the head (hoods)."""
     lift = 0 if frame == 0 else 2
     legs = {0: (15, 29), 1: (11, 31), 2: (18, 26)}[frame]
     arms = {0: (8, 40), 1: (6, 42), 2: (10, 38)}[frame]
-    return f'''<svg xmlns="http://www.w3.org/2000/svg" width="56" height="68" viewBox="0 0 56 68">
+    hat_svg = (f'<path d="M11 18 Q26 2 41 18 Z" fill="{hat}" stroke="{INK}" stroke-width="1.5"/>'
+               f'<rect x="9" y="16" width="34" height="4" rx="2" fill="{hat}" stroke="{INK}" stroke-width="1.5"/>'
+               if hat else "")
+    mask_svg = f'<rect x="12" y="20" width="28" height="8" rx="4" fill="{mask}"/>' if mask else ""
+    return f'''<svg xmlns="http://www.w3.org/2000/svg" width="56" height="82" viewBox="0 -14 56 82">
+<defs>{defs}</defs>
 <ellipse cx="28" cy="65" rx="16" ry="3" fill="#000" opacity="0.15"/>
-<rect x="{legs[0] + 2}" y="{57 - lift}" width="9" height="{9 + lift}" rx="3" fill="#333" stroke="{INK}" stroke-width="1.5"/>
-<rect x="{legs[1] + 2}" y="{57 - lift}" width="9" height="{9 + lift}" rx="3" fill="#333" stroke="{INK}" stroke-width="1.5"/>
-<circle cx="{arms[0] + 2}" cy="{46 - lift}" r="4" fill="#F2C29B" stroke="{INK}" stroke-width="1.5"/>
-<circle cx="{54 - arms[0]}" cy="{arms[1] + 4 - lift}" r="4" fill="#F2C29B" stroke="{INK}" stroke-width="1.5"/>
+<g transform="translate(2 {-lift})">{back}</g>
+<rect x="{legs[0] + 2}" y="{57 - lift}" width="9" height="{9 + lift}" rx="3" fill="{pants}" stroke="{INK}" stroke-width="1.5"/>
+<rect x="{legs[1] + 2}" y="{57 - lift}" width="9" height="{9 + lift}" rx="3" fill="{pants}" stroke="{INK}" stroke-width="1.5"/>
+<circle cx="{arms[0] + 2}" cy="{46 - lift}" r="4" fill="{skin}" stroke="{INK}" stroke-width="1.5"/>
+<circle cx="{54 - arms[0]}" cy="{arms[1] + 4 - lift}" r="4" fill="{skin}" stroke="{INK}" stroke-width="1.5"/>
 <g transform="translate(2 {-lift})">
 <rect x="14" y="36" width="24" height="22" rx="6" fill="{shirt}" stroke="{INK}" stroke-width="2"/>
 <rect x="15" y="41" width="22" height="4" fill="{stripe}"/>
 <rect x="15" y="49" width="22" height="4" fill="{stripe}"/>
-<circle cx="26" cy="24" r="14" fill="#F2C29B" stroke="{INK}" stroke-width="2"/>
-<path d="M11 18 Q26 2 41 18 Z" fill="{hat}" stroke="{INK}" stroke-width="1.5"/>
-<rect x="9" y="16" width="34" height="4" rx="2" fill="{hat}" stroke="{INK}" stroke-width="1.5"/>
-<rect x="12" y="20" width="28" height="8" rx="4" fill="{mask}"/>
+{behind_head}
+<circle cx="26" cy="24" r="14" fill="{skin}" stroke="{INK}" stroke-width="2"/>
+{hat_svg}
+{mask_svg}
 <circle cx="21" cy="24" r="2.6" fill="#fff"/>
 <circle cx="31" cy="24" r="2.6" fill="#fff"/>
 <circle cx="22" cy="24" r="1.3" fill="#000"/>
 <circle cx="32" cy="24" r="1.3" fill="#000"/>
 <path d="M20 31 Q26 37 32 31" fill="#fff" stroke="{INK}" stroke-width="1.6" stroke-linejoin="round"/>
+{extra}
 </g>
 </svg>'''
 
 
-PLAYER_FRAMES = [person_svg("#2f6fd6", "#ffffff", "#1d3f8a", "#111", frame=f) for f in range(3)]
+CAPE = f'<path d="M13 38 L2 68 L50 68 L39 38 Z" fill="{{c}}" stroke="{INK}" stroke-width="1.5"/>'
+SPARKS = SPARK.format(x=2, y=4, c="#fff") + SPARK.format(x=44, y=40, c="#fff")
+
+#      name              price    look
+SKINS = [
+    ("Classic Thief",         0, dict(shirt="#2f6fd6", stripe="#ffffff", hat="#1d3f8a", mask="#111")),
+    ("Red Robber",          100, dict(shirt="#d63a3a", stripe="#ffffff", hat="#8a1a1a", mask="#111")),
+    ("Green Sneak",         250, dict(shirt="#2fb84a", stripe="#dfffe0", hat="#1a7a2e", mask="#111")),
+    ("Pink Bandit",         500, dict(shirt="#ff6fb5", stripe="#ffffff", hat="#c2185b", mask="#111")),
+    ("Ninja",              1000, dict(shirt="#222", stripe="#333", hat="#111", mask="#111",
+                                      extra='<rect x="13" y="27" width="26" height="10" rx="4" fill="#111"/>'
+                                            '<rect x="10" y="14" width="32" height="4" fill="#e02a2a"/>'
+                                            '<path d="M42 15 L50 12 L48 18 Z" fill="#e02a2a"/>')),
+    ("Pirate",             2500, dict(shirt="#fff", stripe="#d63a3a", hat=None, mask=None,
+                                      extra=f'<path d="M4 17 Q26 -6 48 17 Q26 10 4 17 Z" fill="#222" stroke="{INK}" '
+                                            'stroke-width="1.5"/><circle cx="26" cy="8" r="2.5" fill="#fff"/>'
+                                            '<circle cx="31" cy="24" r="4" fill="#111"/>'
+                                            '<path d="M12 18 L40 27" stroke="#111" stroke-width="1.5"/>')),
+    ("Cowboy",             5000, dict(shirt="#c47a3a", stripe="#8a4a1a", hat=None, mask=None, pants="#3a5a9a",
+                                      extra=f'<path d="M16 14 Q16 0 26 1 Q36 0 36 14 Z" fill="#8B5A2B" stroke="{INK}" '
+                                            f'stroke-width="1.5"/><ellipse cx="26" cy="14" rx="23" ry="4" fill="#8B5A2B" '
+                                            f'stroke="{INK}" stroke-width="1.5"/><rect x="16" y="9" width="20" height="3" '
+                                            'fill="#d63a3a"/><path d="M19 30 Q26 26 33 30 Q26 32 19 30 Z" fill="#6b3a10"/>')),
+    ("Chef",               7500, dict(shirt="#fff", stripe="#eee", hat=None, mask=None, pants="#222",
+                                      extra=f'<rect x="15" y="8" width="22" height="7" fill="#fff" stroke="{INK}" '
+                                            f'stroke-width="1.5"/><circle cx="18" cy="4" r="6" fill="#fff" stroke="{INK}" '
+                                            f'stroke-width="1.5"/><circle cx="26" cy="0" r="7" fill="#fff" stroke="{INK}" '
+                                            f'stroke-width="1.5"/><circle cx="34" cy="4" r="6" fill="#fff" stroke="{INK}" '
+                                            'stroke-width="1.5"/><rect x="16" y="6" width="20" height="8" fill="#fff"/>'
+                                            '<path d="M18 38 L26 44 L34 38" fill="#d63a3a"/>')),
+    ("Astronaut",         10000, dict(shirt="#f0f0f0", stripe="#ff7a2f", hat=None, mask=None, pants="#ddd",
+                                      extra=f'<circle cx="26" cy="24" r="18" fill="#bfe8ff" opacity="0.35" '
+                                            f'stroke="#ccc" stroke-width="3"/><path d="M26 6 V-2" stroke="{INK}" '
+                                            'stroke-width="1.5"/><circle cx="26" cy="-3" r="2.5" fill="#ff3030"/>'
+                                            '<ellipse cx="18" cy="15" rx="4" ry="2" fill="#fff" opacity="0.7"/>')),
+    ("Robot",             20000, dict(shirt="#7a869a", stripe="#ffd23f", hat=None, mask=None, pants="#555",
+                                      skin="#b8c2cc",
+                                      extra=f'<rect x="13" y="20" width="26" height="8" rx="2" fill="#00e5ff" '
+                                            f'opacity="0.7"/><path d="M26 10 V2" stroke="{INK}" stroke-width="2"/>'
+                                            '<circle cx="26" cy="1" r="3" fill="#ff3030"/><circle cx="13" cy="30" r="1.5" '
+                                            'fill="#555"/><circle cx="39" cy="30" r="1.5" fill="#555"/>')),
+    ("Zombie",            30000, dict(shirt="#6b7a4a", stripe="#4a5a2a", hat=None, mask=None, skin="#8fc98f",
+                                      pants="#4a3a2a",
+                                      extra='<path d="M12 14 L16 6 L20 12 L25 4 L30 11 L35 5 L40 14 Q26 8 12 14 Z" '
+                                            'fill="#3a5a2a"/><path d="M34 16 V22 M32 18 H36 M32 20 H36" stroke="#333" '
+                                            'stroke-width="1"/><path d="M16 56 L20 52 L24 56 L28 52 L32 56" fill="none" '
+                                            'stroke="#4a5a2a" stroke-width="2"/>')),
+    ("Wizard",            50000, dict(shirt="#6a1b9a", stripe="#ffd23f", hat=None, mask=None, pants="#4a148c",
+                                      extra=f'<path d="M6 17 L24 -13 L46 17 Z" fill="#4a148c" stroke="{INK}" '
+                                            'stroke-width="1.5"/>' + SPARK.format(x=22, y=-2, c="#ffd23f")
+                                            + '<path d="M16 30 Q26 50 36 30 Q26 35 16 30 Z" fill="#fff" stroke="#ccc"/>')),
+    ("Knight",            75000, dict(shirt="#9aa3ad", stripe="#6a737d", hat=None, mask=None, pants="#6a737d",
+                                      extra=f'<path d="M10 24 Q10 6 26 6 Q42 6 42 24 L42 34 L10 34 Z" fill="#b8c2cc" '
+                                            f'stroke="{INK}" stroke-width="1.5"/><rect x="13" y="21" width="26" height="4" '
+                                            f'fill="#333"/><path d="M26 6 Q30 -6 40 -4 Q32 0 30 6 Z" fill="#e02a2a" '
+                                            f'stroke="{INK}" stroke-width="1"/>')),
+    ("Superhero",        100000, dict(shirt="#1e56d6", stripe="#1e56d6", hat=None, mask="#e02a2a", pants="#d63a3a",
+                                      back=CAPE.format(c="#e02a2a"),
+                                      extra=f'<path d="M20 40 L32 40 L26 50 Z" fill="#ffd23f" stroke="{INK}" '
+                                            'stroke-width="1"/><path d="M13 12 Q26 4 39 12" fill="none" stroke="#3a2410" '
+                                            'stroke-width="4"/>')),
+    ("Clown",            150000, dict(shirt="#ffd23f", stripe="#e02a2a", hat=None, mask=None, pants="#1e56d6",
+                                      behind_head="".join(f'<circle cx="{x}" cy="{y}" r="6" fill="{c}"/>' for x, y, c in
+                                                          ((10, 18, "#ff5e5e"), (14, 9, "#ffd23f"), (22, 4, "#6be06b"),
+                                                           (31, 4, "#5ec8ff"), (39, 9, "#b36bff"), (42, 18, "#ff5e9e"))),
+                                      extra='<circle cx="26" cy="28" r="3.5" fill="#e02a2a"/>'
+                                            '<path d="M18 33 Q26 40 34 33" fill="none" stroke="#e02a2a" stroke-width="2"/>')),
+    ("King",             250000, dict(shirt="#b71c1c", stripe="#ffd700", hat=None, mask=None, pants="#222",
+                                      back=CAPE.format(c="#8e0000"),
+                                      extra=f'<path d="M13 12 L15 0 L20 7 L26 -3 L32 7 L37 0 L39 12 Z" fill="#ffd700" '
+                                            f'stroke="{INK}" stroke-width="1.5"/><circle cx="26" cy="5" r="1.8" '
+                                            'fill="#e02a2a"/><path d="M19 30 Q26 27 33 30" fill="none" stroke="#6b3a10" '
+                                            'stroke-width="2"/>')),
+    ("Gobo Suit",        400000, dict(shirt="#FFBF1F", stripe="#E08A00", hat=None, mask=None, pants="#E08A00",
+                                      behind_head=f'<path d="M26 -8 L31 6 L41 -4 L40 10 L50 6 L44 18 L52 24 L42 30 L10 30 '
+                                                  f'L0 24 L8 18 L2 6 L12 10 L11 -4 L21 6 Z" fill="#FFBF1F" '
+                                                  f'stroke="{INK}" stroke-width="1.5"/>')),
+    ("Alien",            600000, dict(shirt="#4a148c", stripe="#7ED957", hat=None, mask=None, skin="#7ED957",
+                                      pants="#4a148c",
+                                      extra=f'<path d="M18 12 L12 0 M34 12 L40 0" stroke="{INK}" stroke-width="1.5"/>'
+                                            '<circle cx="12" cy="0" r="3" fill="#ffe066"/><circle cx="40" cy="0" r="3" '
+                                            'fill="#ffe066"/><ellipse cx="20" cy="23" rx="5" ry="6.5" fill="#111"/>'
+                                            '<ellipse cx="32" cy="23" rx="5" ry="6.5" fill="#111"/>'
+                                            '<circle cx="21.5" cy="21" r="1.5" fill="#fff"/><circle cx="33.5" cy="21" '
+                                            'r="1.5" fill="#fff"/>')),
+    ("Golden Thief",    1000000, dict(shirt="#FFD700", stripe="#FFF3A0", hat="#E0A800", mask="#8a6a00", pants="#C79100",
+                                      extra=SPARKS)),
+    ("Rainbow Legend",  2500000, dict(shirt="url(#rb)", stripe="#ffffff", hat="#b36bff", mask="#111", pants="#5ec8ff",
+                                      defs=grad("rb", "#FF5E5E", "#FFD23F", "#6BE06B", "#5EC8FF", "#B36BFF"),
+                                      back=CAPE.format(c="url(#rb)"), extra=SPARKS)),
+]
+N_SKINS = len(SKINS)
+PLAYER_FRAMES = [person_svg(**look, frame=f) for _, _, look in SKINS for f in range(3)]
+
+
+def svg_inner(svg):
+    return svg.split(">", 1)[1].rsplit("</svg>", 1)[0]
+
+
+def skin_card_svg(i, owned):
+    """A shop card: picture of the skin, its name, and its price (or OWNED)."""
+    name, price, look = SKINS[i]
+    color = ["#dfe8f5", "#d6f5d6", "#d6ecff", "#eed6ff", "#ffe9b0", "#ffd6e8"][min(5, int(math.log10(price + 1)) - 1 if price else 0)]
+    figure = svg_inner(person_svg(**look))
+    label = ('<rect x="14" y="58" width="56" height="12" rx="6" fill="#1f9e3a"/>'
+             '<text x="42" y="67.5" font-family="Sans Serif" font-size="9" font-weight="bold" fill="#fff" '
+             'text-anchor="middle">OWNED</text>') if owned else (
+             f'<rect x="10" y="58" width="64" height="12" rx="6" fill="#ffd23f" stroke="{INK}" stroke-width="1"/>'
+             f'<text x="42" y="67.5" font-family="Sans Serif" font-size="9" font-weight="bold" fill="{INK}" '
+             f'text-anchor="middle">${price:,}</text>')
+    return f'''<svg xmlns="http://www.w3.org/2000/svg" width="84" height="72" viewBox="0 0 84 72">
+<rect x="1.5" y="1.5" width="81" height="69" rx="10" fill="{color}" stroke="{INK}" stroke-width="2.5"/>
+<g transform="translate(28 1) scale(0.5) translate(0 14)">{figure}</g>
+<text x="42" y="54" font-family="Sans Serif" font-size="9" font-weight="bold" fill="{INK}" text-anchor="middle">{name}</text>
+{label}
+</svg>'''
+
+
+SKIN_CARDS = [skin_card_svg(i, owned) for i in range(N_SKINS) for owned in (False, True)]
+
+
+def pill_button(label, top, bottom, icon, w=130, h=46, size=24):
+    return f'''<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{h}" viewBox="0 0 {w} {h}">
+<defs><linearGradient id="pf" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="{top}"/>
+<stop offset="1" stop-color="{bottom}"/></linearGradient></defs>
+<rect x="3" y="6" width="{w - 6}" height="{h - 8}" rx="{(h - 8) / 2}" fill="#000" opacity="0.3"/>
+<rect x="3" y="2" width="{w - 6}" height="{h - 8}" rx="{(h - 8) / 2}" fill="url(#pf)" stroke="{INK}" stroke-width="2.5"/>
+<rect x="12" y="5" width="{w - 24}" height="{(h - 8) / 3}" rx="6" fill="#fff" opacity="0.3"/>
+{icon}
+<text x="{w / 2 + 14}" y="{h / 2 + size / 3}" font-family="Marker" font-size="{size}" fill="{INK}" opacity="0.4" text-anchor="middle">{label}</text>
+<text x="{w / 2 + 12}" y="{h / 2 + size / 3 - 2}" font-family="Marker" font-size="{size}" fill="#fff" text-anchor="middle">{label}</text>
+</svg>'''
+
+
+SHIRT_ICON = (f'<path d="M14 14 L22 10 Q26 14 30 10 L38 14 L35 21 L32 19 L32 34 L20 34 L20 19 L17 21 Z" '
+              f'fill="#ffd23f" stroke="{INK}" stroke-width="1.8" stroke-linejoin="round"/>')
+SKINS_BUTTON = pill_button("SKINS", "#b36bff", "#5a1fb8", SHIRT_ICON)
+BACK_BUTTON = pill_button("BACK", "#ff7a5a", "#c02a2a",
+                          f'<path d="M30 11 L16 21 L30 31 Z" fill="#fff" stroke="{INK}" stroke-width="1.8" '
+                          'stroke-linejoin="round"/>', w=110, h=40, size=20)
+
+
+def shop_backdrop():
+    rays = "".join(f'<polygon points="240,200 {240 + 700 * math.cos(2 * math.pi * i / 20):.0f},'
+                   f'{200 + 700 * math.sin(2 * math.pi * i / 20):.0f} {240 + 700 * math.cos(2 * math.pi * (i + 0.5) / 20):.0f},'
+                   f'{200 + 700 * math.sin(2 * math.pi * (i + 0.5) / 20):.0f}" fill="#7a3cd6"/>' for i in range(20))
+    return f'''<svg xmlns="http://www.w3.org/2000/svg" width="480" height="360" viewBox="0 0 480 360">
+<rect width="480" height="360" fill="#5a1fb8"/>
+{rays}
+<rect x="0" y="0" width="480" height="30" fill="#2d3748" opacity="0.35"/>
+<text x="242" y="56" font-family="Marker" font-size="30" fill="{INK}" text-anchor="middle">SKIN SHOP</text>
+<text x="240" y="54" font-family="Marker" font-size="30" fill="#ffd23f" text-anchor="middle">SKIN SHOP</text>
+{SPARK.format(x=150, y=34, c="#fff")}{SPARK.format(x=322, y=38, c="#fff")}
+</svg>'''
+
 
 COIN = f'''<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 26 26">
 <circle cx="13" cy="13" r="11.5" fill="#FFD23F" stroke="{INK}" stroke-width="2"/>
@@ -304,9 +522,8 @@ def backdrop():
 <rect x="0" y="0" width="480" height="126" fill="#9ed8ff"/>
 <circle cx="440" cy="52" r="16" fill="#ffe066"/>
 <rect x="0" y="108" width="480" height="20" fill="#6cbf4a"/>
-{house(45, "#7a4bd6", "#e6d6ff")}{house(105, "#1aa38a", "#d0fff4")}{house(375, "#d9731a", "#ffe2c4")}{house(435, "#d63a3a", "#ffd6d6")}
+{house(375, "#d9731a", "#ffe2c4")}{house(435, "#d63a3a", "#ffd6d6")}
 <rect x="0" y="0" width="480" height="30" fill="#2d3748" opacity="0.35"/>
-<text x="75" y="124" font-family="Sans Serif" font-size="10" font-weight="bold" fill="#1d4a1d" text-anchor="middle">OTHER PLAYERS' BASES</text>
 <text x="405" y="124" font-family="Sans Serif" font-size="10" font-weight="bold" fill="#1d4a1d" text-anchor="middle">OTHER PLAYERS' BASES</text>
 <rect x="0" y="140" width="480" height="60" fill="#c8202a"/>
 <rect x="0" y="140" width="480" height="4" fill="#ffd23f"/>
@@ -362,19 +579,19 @@ def card(title, title_color, lines):
                     f'font-weight="bold" fill="{color}" text-anchor="middle">{text}</text>')
         y += size + 8
     left = GOBO_ART[0].split(">", 1)[1].rsplit("</svg>", 1)[0]
-    right = GOBO_ART[14].split(">", 1)[1].rsplit("</svg>", 1)[0].replace('id="', 'id="t_').replace("url(#", "url(#t_")
+    right = GOBO_ART[21].split(">", 1)[1].rsplit("</svg>", 1)[0].replace('id="', 'id="t_').replace("url(#", "url(#t_")
     return f'''<svg xmlns="http://www.w3.org/2000/svg" width="480" height="360" viewBox="0 0 480 360">
 <rect x="16" y="12" width="448" height="336" rx="24" fill="#fffaf0" stroke="#e08a00" stroke-width="6" opacity="0.97"/>
 <g transform="translate(30 16)">{left}</g>
 <g transform="translate(380 16)">{right}</g>
 <text x="240" y="72" font-family="Marker" font-size="38" fill="{title_color}" text-anchor="middle">{title}</text>
-<text x="240" y="98" font-family="Sans Serif" font-size="13" fill="#888" text-anchor="middle">16 Gobos to collect, from Common to the SECRET Dragon Gobo!</text>
+<text x="240" y="98" font-family="Sans Serif" font-size="13" fill="#888" text-anchor="middle">24 Gobos to collect, from Common to the SECRET Shadow Gobo!</text>
 {"".join(rows)}
 </svg>'''
 
 
 TITLE_CARD = card("STEAL A GOBO!", "#e0600a", [
-    ("Walk: Arrow keys or W A S D", 15, "#333"),
+    ("Walk: Arrow keys / W A S D   •   SKINS button = new looks", 15, "#333"),
     ("Buy a Gobo on the red carpet: touch it + press E", 15, "#333"),
     ("Gobos in YOUR BASE make money every second", 15, "#333"),
     ("Click the STEAL button to sneak into a player's base!", 15, "#b02a2a"),
@@ -454,11 +671,13 @@ STOP_MUTATION = {"tagName": "mutation", "children": [], "hasnext": "false"}
 
 GLOBAL_VARS = ["Money", "Income", "Rebirths", "Multiplier", "Rebirth Cost", "Speed", "Upgrade Cost",
                "Scene", "Steal Cooldown", "Raid Time", "Home X", "Home Y", "Tip",
-               "Flash", "FX", "FX X", "FX Y"]
+               "Flash", "FX", "FX X", "FX Y", "Skin"]
 LISTS = {"My Slots": [0] * 8,
          "Names": [g[0] for g in GOBOS], "Tiers": [g[1] for g in GOBOS],
-         "Prices": [g[2] for g in GOBOS], "Rates": [g[3] for g in GOBOS], "Chances": CUMULATIVE}
-BROADCASTS = ["title", "start", "tip", "raid start", "raid end", "flash", "fx"]
+         "Prices": [g[2] for g in GOBOS], "Rates": [g[3] for g in GOBOS], "Chances": CUMULATIVE,
+         "Skin Names": [k[0] for k in SKINS], "Skin Prices": [k[1] for k in SKINS],
+         "Skins Owned": [1] + [0] * (len(SKINS) - 1)}
+BROADCASTS = ["title", "start", "tip", "raid start", "raid end", "flash", "fx", "shop open", "shop close"]
 
 
 def vid(name):
@@ -685,7 +904,8 @@ stage = Compiler("stage")
 init = [set_var("Money", 50), set_var("Income", 0), set_var("Rebirths", 0), set_var("Multiplier", 1),
         set_var("Rebirth Cost", 20000), set_var("Speed", 4), set_var("Upgrade Cost", 200),
         set_var("Scene", 1), set_var("Steal Cooldown", 0), set_var("Raid Time", 0), set_var("Tip", ""),
-        clear_list("My Slots")] + [add_to("My Slots", 0) for _ in range(8)]
+        set_var("Skin", 1), clear_list("My Slots"), clear_list("Skins Owned"), add_to("Skins Owned", 1)] + [
+        add_to("My Slots", 0) for _ in range(8)] + [add_to("Skins Owned", 0) for _ in range(N_SKINS - 1)]
 income = [set_var("Income", 0)] + [
     if_(gt(item("My Slots", i), 0), [change_var("Income", item("Rates", item("My Slots", i)))])
     for i in range(1, 9)] + [set_var("Income", mul(V("Income"), V("Multiplier")))]
@@ -710,6 +930,8 @@ stage.script([
     switch_backdrop(rand(2, 1 + len(RAID_BASES))),
     show_var("Raid Time"),
 ], 20, 600)
+stage.script([when_msg("shop open"), switch_backdrop("Skin Shop")], 300, 600)
+stage.script([when_msg("shop close"), switch_backdrop("Gobo Land")], 300, 700)
 stage.script([
     when_msg("raid end"),
     set_var("Scene", 1),
@@ -725,7 +947,7 @@ button.script([flag(), rot_style("all around"), point_dir(90), goto_xy(0, 100), 
 button.script([
     when_msg("start"),
     forever([
-        if_else(eq(V("Scene"), 2), [hide()], [
+        if_else(not_(eq(V("Scene"), 1)), [hide()], [
             show(),
             if_else(gt(V("Steal Cooldown"), 0),
                     [costume("wait"), size(90), point_dir(90), say(join("Ready in ", V("Steal Cooldown"), "s"))],
@@ -760,14 +982,15 @@ button.script([
 
 # ---------------------------------------------------------------- Player
 
-player = Compiler("player", local_vars=["step", "moving"])
+player = Compiler("player", local_vars=["step", "moving", "frame"])
 player.script([
-    flag(), rot_style("left-right"), point_dir(90), goto_xy(HOME_X, HOME_Y), costume("idle"), size(100),
+    flag(), rot_style("left-right"), point_dir(90), goto_xy(HOME_X, HOME_Y), costume(1), size(100),
     show(), front(), say(""),
 ], 20, 20)
 player.script([
     when_msg("start"),
-    forever([
+    forever([if_else(eq(V("Scene"), 3), [hide()], [
+        show(),
         set_var("step", V("Speed")), set_var("moving", 0),
         if_(any_key("right arrow", "d"), [point_dir(90), change_x(V("step")), set_var("moving", 1)]),
         if_(any_key("left arrow", "a"), [point_dir(-90), change_x(sub(0, V("step"))), set_var("moving", 1)]),
@@ -775,28 +998,29 @@ player.script([
         if_(any_key("down arrow", "s"), [change_y(sub(0, V("step"))), set_var("moving", 1)]),
         if_(gt(y_pos(), 148), [set_y(148)]),
         if_(lt(y_pos(), -160), [set_y(-160)]),
-        # Walking animation: swap legs 8 times a second.
+        # Walking animation: swap legs 8 times a second. Each skin has 3 costumes: stand, walk 1, walk 2.
         if_else(eq(V("moving"), 1),
-                [costume(join("walk", add(1, mod(mathop("floor", mul(timer(), 8)), 2))))],
-                [costume("idle")]),
-    ]),
+                [set_var("frame", add(2, mod(mathop("floor", mul(timer(), 8)), 2)))],
+                [set_var("frame", 1)]),
+        costume(add(mul(sub(V("Skin"), 1), 3), V("frame"))),
+    ])]),
 ], 20, 200)
 player.script([when_msg("tip"), say_for(V("Tip"), 2)], 480, 20)
 player.script([when_msg("raid start"), goto_xy(0, -112), point_dir(90), front()], 480, 120)
 player.script([when_msg("raid end"), goto_xy(V("Home X"), V("Home Y")), front()], 480, 200)
 player.script([
     when_key("u"),
-    if_else(lt(V("Money"), V("Upgrade Cost")),
+    if_(eq(V("Scene"), 1), [if_else(lt(V("Money"), V("Upgrade Cost")),
             tip("Faster shoes cost $", V("Upgrade Cost")),
             [change_var("Money", sub(0, V("Upgrade Cost"))),
              change_var("Speed", 0.5),
              set_var("Upgrade Cost", mul(V("Upgrade Cost"), 3)),
              set_var("FX", "zoom"), set_var("FX X", x_pos()), set_var("FX Y", add(y_pos(), 45)), broadcast("fx"),
-             *tip("Zoom! Your speed is now ", V("Speed"))]),
+             *tip("Zoom! Your speed is now ", V("Speed"))])]),
 ], 480, 300)
 player.script([
     when_key("r"),
-    if_else(or_(lt(V("Money"), V("Rebirth Cost")), eq(V("Scene"), 2)),
+    if_else(or_(lt(V("Money"), V("Rebirth Cost")), not_(eq(V("Scene"), 1))),
             tip("Rebirth costs $", V("Rebirth Cost"), ". It resets your Gobos but you earn more!"),
             [set_var("Money", 0),
              *[replace("My Slots", i, 0) for i in range(1, 9)],
@@ -849,7 +1073,7 @@ carpet = [
     if_(not_(lt(V("rarity"), RARE_FROM)), [
         *tip("WOW! A ", TIER, " ", NAME, " is on the carpet!"), play("cash"), *fx_here("wow", 1)]),
     repeat_until(or_(gt(x_pos(), 232), not_(eq(V("kind"), 1))), [
-        if_else(eq(V("Scene"), 2), [hide(), say("")], [
+        if_else(not_(eq(V("Scene"), 1)), [hide(), say("")], [
             show(),
             change_x(1.2),
             # Waddle: hop and rock from side to side.
@@ -928,7 +1152,7 @@ burst = [
     say(""), costume(V("fx")), clear_effects(), size(20), point_dir(rand(80, 100)), show(), front(), play("pop"),
     repeat(5, [change_size(22)]),
     repeat(3, [change_size(-6)]),
-    wait(0.5),
+    wait(0.8),
     repeat(8, [change_effect("GHOST", 12), change_y(2)]),
     delete_clone(),
 ]
@@ -942,8 +1166,78 @@ gobo.script([
     if_(eq(V("kind"), 6), raid),
     say(""), costume(V("rarity")), size(60), show(), back(),
     glide(0.5, SLOT_X, MY_Y),
-    forever([if_else(eq(V("Scene"), 2), [hide(), say("")], [show(), *mine])]),
+    forever([if_else(not_(eq(V("Scene"), 1)), [hide(), say("")], [show(), *mine])]),
 ], 420, 20)
+
+# ---------------------------------------------------------------- SKINS button and skin shop
+
+def hover(normal=100, big=110):
+    return if_else(touching("_mouse_"), [size(big), wobble(4, 900, 0)], [size(normal), point_dir(90)])
+
+
+skins_btn = Compiler("skinsbtn")
+skins_btn.script([flag(), rot_style("all around"), goto_xy(-172, 124), point_dir(90), size(100), show(), front()],
+                 20, 20)
+skins_btn.script([
+    when_msg("start"),
+    forever([if_else(eq(V("Scene"), 1), [show(), hover()], [hide()])]),
+], 20, 140)
+skins_btn.script([
+    when_clicked(),
+    if_(eq(V("Scene"), 1), [size(85), wait(0.08), set_var("Scene", 3), play("whoosh"), broadcast("shop open")]),
+], 20, 260)
+
+back_btn = Compiler("backbtn")
+back_btn.script([flag(), hide(), rot_style("all around"), goto_xy(178, 150)], 20, 20)
+back_btn.script([
+    when_msg("shop open"), show(), front(),
+    repeat_until(not_(eq(V("Scene"), 3)), [hover()]),
+    hide(),
+], 20, 120)
+back_btn.script([
+    when_clicked(),
+    if_(eq(V("Scene"), 3), [set_var("Scene", 1), play("whoosh"), broadcast("shop close")]),
+], 20, 260)
+
+CARD_PRICE = item("Skin Prices", V("id"))
+card = Compiler("card", local_vars=["id", "orig"])
+card.script([flag(), hide(), rot_style("all around"), set_var("orig", 1)], 20, 20)
+card.script([
+    when_msg("shop open"),
+    if_(eq(V("orig"), 1), [
+        *[[set_var("id", i), goto_xy(-180 + ((i - 1) % 5) * 90, 86 - ((i - 1) // 5) * 76), clone_me()]
+          for i in range(1, N_SKINS + 1)],
+    ]),
+], 20, 120)
+card.script([
+    when_cloned(),
+    set_var("orig", 0), clear_effects(), show(), front(),
+    forever([
+        # Costume 2*id-1 shows the price, 2*id shows OWNED.
+        costume(add(sub(mul(V("id"), 2), 1), item("Skins Owned", V("id")))),
+        if_else(eq(V("id"), V("Skin")),
+                [size(add(106, mul(4, sin_(mul(timer(), 400))))), wobble(3, 300, 0), set_effect("BRIGHTNESS", 10)],
+                [set_effect("BRIGHTNESS", 0), hover(100, 108)]),
+    ]),
+], 300, 20)
+card.script([
+    when_clicked(),
+    if_(eq(V("orig"), 0), [
+        if_else(eq(item("Skins Owned", V("id")), 1),
+                [set_var("Skin", V("id")), play("pop"),
+                 say_for(join("You are wearing ", item("Skin Names", V("id")), "!"), 1.5)],
+                [if_else(lt(V("Money"), CARD_PRICE),
+                         [play("pop"), repeat(3, [point_dir(80), wait(0.04), point_dir(100), wait(0.04)]),
+                          point_dir(90), say_for(join("You need $", CARD_PRICE, "!"), 1.5)],
+                         [change_var("Money", sub(0, CARD_PRICE)),
+                          replace("Skins Owned", V("id"), 1),
+                          set_var("Skin", V("id")),
+                          set_var("FX", "kaching"), set_var("FX X", x_pos()), set_var("FX Y", add(y_pos(), 20)),
+                          broadcast("fx"), play("cash"),
+                          say_for(join("You bought ", item("Skin Names", V("id")), "!"), 1.5)])]),
+    ]),
+], 300, 300)
+card.script([when_msg("shop close"), if_(eq(V("orig"), 0), [delete_clone()])], 700, 20)
 
 # ---------------------------------------------------------------- comic flash (full screen)
 
@@ -970,7 +1264,7 @@ cloud.script([
     when_cloned(),
     back(),
     forever([
-        if_else(eq(V("Scene"), 2), [hide()], [show()]),
+        if_else(not_(eq(V("Scene"), 1)), [hide()], [show()]),
         change_x(0.3),
         if_(gt(x_pos(), 235), [set_x(-235)]),
     ]),
@@ -1028,7 +1322,8 @@ targets = [
      "broadcasts": {bid(b): b for b in BROADCASTS}, "blocks": stage.blocks,
      "comments": {}, "currentCostume": 0,
      "costumes": [svg_costume("Gobo Land", backdrop(), 240, 180)]
-                 + [svg_costume(f"{r[0].title()}'s Base", raid_backdrop(*r), 240, 180) for r in RAID_BASES],
+                 + [svg_costume(f"{r[0].title()}'s Base", raid_backdrop(*r), 240, 180) for r in RAID_BASES]
+                 + [svg_costume("Skin Shop", shop_backdrop(), 240, 180)],
      "sounds": [], "volume": 100, "layerOrder": 0, "tempo": 60, "videoTransparency": 50,
      "videoState": "on", "textToSpeechLanguage": None},
     sprite(cloud, "Cloud", [svg_costume("cloud", CLOUD)], [], 1, visible=False),
@@ -1036,14 +1331,24 @@ targets = [
            + [svg_costume(g[0] + " blink", art) for g, art in zip(GOBOS, GOBO_BLINK)]
            + [svg_costume("coin", COIN)] + [svg_costume(n, art) for n, art in BURSTS.items()],
            [wav_sound("pop", POP), wav_sound("cash", CASH)], 2, visible=False, style="all around"),
-    sprite(player, "Player", [svg_costume("idle", PLAYER_FRAMES[0]), svg_costume("walk1", PLAYER_FRAMES[1]),
-                              svg_costume("walk2", PLAYER_FRAMES[2])], [wav_sound("ouch", OUCH)], 3, HOME_X, HOME_Y),
+    sprite(player, "Player", [svg_costume(f"{SKINS[i // 3][0]} {['stand', 'walk1', 'walk2'][i % 3]}", art)
+                              for i, art in enumerate(PLAYER_FRAMES)], [wav_sound("ouch", OUCH)], 3, HOME_X, HOME_Y),
     sprite(button, "STEAL Button", [svg_costume("ready", STEAL_READY), svg_costume("wait", STEAL_WAIT)],
            [wav_sound("whoosh", WHOOSH)], 4, 0, 100, style="all around"),
+    sprite(skins_btn, "SKINS Button", [svg_costume("skins", SKINS_BUTTON)], [wav_sound("whoosh", WHOOSH)], 5,
+           -172, 124, style="all around"),
+    sprite(back_btn, "BACK Button", [svg_costume("back", BACK_BUTTON)], [wav_sound("whoosh", WHOOSH)], 5,
+           178, 150, visible=False, style="all around"),
+    sprite(card, "Skin Card", [svg_costume(f"{SKINS[i // 2][0]}{' owned' if i % 2 else ''}", art)
+                               for i, art in enumerate(SKIN_CARDS)],
+           [wav_sound("pop", POP), wav_sound("cash", CASH)], 5, visible=False, style="all around"),
     sprite(flash_sprite, "Comic Flash", [svg_costume(n, art, 240, 180) for n, art in FLASHES.items()], [], 5,
            visible=False),
     sprite(message, "Message", [svg_costume("title", TITLE_CARD, 240, 180)], [], 6, visible=False, style="all around"),
 ]
+
+for layer, target in enumerate(targets):
+    target["layerOrder"] = layer
 
 
 def monitor(name, x, y):
